@@ -250,47 +250,6 @@ void Lexer::run()
     }
 }
 
-void Lexer::nextToken()
-{
-    this->trimLeft();
-    while (this->isNotEmpty()) {
-        std::string s = source.substr(this->cur);
-        if (!s.starts_with("#") && !s.starts_with("//")) { break; }
-        this->dropLine();
-        this->trimLeft();
-    }
-}
-
-void Lexer::chopChar()
-{
-    if (this->isNotEmpty()) {
-        char x = this->source[this->cur];
-        this->cur++;
-        if (x == '\n') {
-            this->bol = this->cur;
-            this->row++;
-        }
-    }
-}
-
-void Lexer::trimLeft()
-{
-    while (this->isNotEmpty() && std::isspace(this->source[this->cur])) {
-        this->chopChar();
-    }
-}
-
-void Lexer::dropLine()
-{
-    while (this->isNotEmpty() && this->source[this->cur] != '\n') {
-        this->chopChar();
-    }
-
-    if (this->isNotEmpty()) {
-        this->chopChar();
-    }
-}
-
 void Lexer::makeError(Token token, std::string text)
 {
     std::cerr << fileName << ":" << token.line + 1 << ":" << token.col + 1 << ": ERROR: " << text << '\n';
