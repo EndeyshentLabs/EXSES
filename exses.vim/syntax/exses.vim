@@ -4,7 +4,7 @@ endif
 
 syntax keyword xesTodo contained TODO FIXME XXX NOTE
 
-syntax region xesCommentLine start="}" end="$" display contains=xesTodo
+syntax region xesCommentLine start="#" end="$" display contains=xesTodo
 
 syntax match xesOperators '+'
 syntax match xesOperators '-'
