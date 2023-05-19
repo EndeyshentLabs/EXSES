@@ -17,7 +17,6 @@ syntax match xesOperators '!'
 syntax match xesNumber "\v<\d+>"
 syntax match xesNumber "\v-<\d+>"
 
-highlight default link xesPrimitiveTypes Type
 highlight default link xesNumber         Number
 highlight default link xesCommentLine    Comment
 highlight default link xesOperators      Keyword
