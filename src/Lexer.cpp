@@ -12,30 +12,67 @@ Lexer::Lexer(std::string fileName, std::string source, Target target) : target(t
 {
 }
 
+int stripByCol(std::string line, int col)
+{
+    while (col < line.length() && !std::isspace(line[col])) {
+        col++;
+    }
+    return col;
+}
+
+int chopWord(std::string line, int col)
+{
+    while (col < line.length() && std::isspace(line[col])) {
+        col++;
+    }
+    return col;
+}
 void Lexer::tokenize()
 {
-    std::vector<std::string> words = split(source, "\\s");
+    std::vector<std::string> lines = split(source, "\\n");
+    unsigned int lineCount = 0;
 
-    for (const auto& word : words) {
-        if (isInteger(word)) {
-            this->program.push_back(Token(PUSH, std::stoi(word)));
-        } else if (word == "+") {
-            this->program.push_back(Token(PLUS));
-        } else if (word == "-") {
-            this->program.push_back(Token(MINUS));
-        } else if (word == "*") {
-            this->program.push_back(Token(MULT));
-        } else if (word == "/") {
-            this->program.push_back(Token(DIV));
-        } else if (word == "&") {
-            this->program.push_back(Token(DUP));
-        } else if (word == "$") {
-            this->program.push_back(Token(SWAP));
-        } else if (word == "!") {
-            this->program.push_back(Token(DUMP));
+    for (std::string line : lines) {
+        int col = chopWord(line, 0);
+        int colEnd = 0;
+
+        if (line.find("#") != std::string::npos) {
+            line = line.substr(0, line.find("#"));
+        }
+
+        while (col < line.length()) {
+            colEnd = stripByCol(line, col);
+            if (line.substr(col, colEnd).find(" ") != std::string::npos) {
+                auto list = split(line.substr(col, colEnd), "\\s");
+                this->program.push_back(Token{ static_cast<int>(lineCount), col, UNDEFINED, list.front() });
+            } else {
+                this->program.push_back(Token{ static_cast<int>(lineCount), col, UNDEFINED, line.substr(col, colEnd) });
+            }
+            col = chopWord(line, colEnd);
+        }
+
+        lineCount++;
+    }
+
+    for (auto& el : program) {
+        if (isInteger(el.text)) {
+            el.type = PUSH;
+        } else if (el.text == "+")  {
+            el.type = PLUS;
+        } else if (el.text == "-")  {
+            el.type = MINUS;
+        } else if (el.text == "*")  {
+            el.type = MULT;
+        } else if (el.text == "/")  {
+            el.type = DIV;
+        } else if (el.text == "&")  {
+            el.type = DUP;
+        } else if (el.text == "$")  {
+            el.type = SWAP;
+        } else if (el.text == "!")  {
+            el.type = DUMP;
         } else {
-            // Exrtract location in getter function
-            std::cerr << this->fileName << ":" << this->row << ":" << this->cur - this->bol << ": ERROR: Unknown word `" << word << "`\n";
+            std::cerr << fileName << ":" << el.line + 1 << ":" << el.col + 1 << ": ERROR: Unexpected token `" << el.text << "`\n";
             std::exit(1);
         }
     }
@@ -46,7 +83,7 @@ void Lexer::parse()
     for (Token token : this->program) {
         switch (token.type) {
             case PUSH: {
-                stack.push_back(token.getValue());
+                stack.push_back(stoi(token.text));
             } break;
             case DUP: {
                 stack.push_back(stack.back());
@@ -92,6 +129,7 @@ void Lexer::parse()
                 stack.pop_back();
                 std::cout << a << '\n';
             } break;
+            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; } break;
         }
     }
 }
@@ -131,7 +169,7 @@ void Lexer::chopChar()
 
 void Lexer::trimLeft()
 {
-    while (this->isNotEmpty() && isspace(this->source[this->cur])) {
+    while (this->isNotEmpty() && std::isspace(this->source[this->cur])) {
         this->chopChar();
     }
 }
@@ -145,22 +183,4 @@ void Lexer::dropLine()
     if (this->isNotEmpty()) {
         this->chopChar();
     }
-}
-
-Location Lexer::loc()
-{
-    return Location(this->fileName, this->row, this->cur - this->bol);
-}
-
-Token Lexer::makeNumber()
-{
-    int start = this->cur;
-
-    while (this->isNotEmpty() && std::isdigit(this->source[this->cur])) {
-        this->chopChar();
-    }
-
-    int value = std::stoi(this->source.substr(start, this->cur - start));
-
-    return Token(PUSH, value, this->loc());
 }

@@ -13,12 +13,12 @@ project(EXSES CXX)
 add_executable(
     exsi
     src/main.cpp
-    src/Token.cpp
     src/Lexer.cpp
     src/utils.cpp
-    src/Location.cpp
 )
 
 target_include_directories(exsi PUBLIC src)
+
+# target_compile_definitions(exsi PUBLIC -DDEBUG_TOKENS2) # DEBUG ONLY
 
 target_compile_options(exsi PRIVATE -Wall -Wextra -O2 -pedantic -Werror=switch -fdiagnostics-color)

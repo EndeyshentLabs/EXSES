@@ -1,10 +1,12 @@
 #ifndef EXSES_TOKEN_H
 #define EXSES_TOKEN_H
 
-#include "Location.hpp"
+#include <string>
+
 enum TokenType
 {
-    PUSH,
+    UNDEFINED = -1,
+    PUSH = 0,
     DUP,
     SWAP,
     PLUS,
@@ -14,18 +16,12 @@ enum TokenType
     DUMP
 };
 
-class Token
+struct Token
 {
-public:
-    Token(TokenType type, int value);
-    Token(TokenType type, int value, Location loc);
-    Token(TokenType type);
-    Token(TokenType type, Location loc);
+    int line;
+    int col;
     TokenType type;
-    Location loc;
-    int getValue() { return this->value; };
-private:
-    int value; // TODO: Add different types
+    std::string text;
 };
 
 #endif /* EXSES_TOKEN_H */

@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <Token.hpp>
-#include <Location.hpp>
 
 enum Target {
     PYTHON3,
@@ -34,7 +33,6 @@ private:
     void chopChar();
     void trimLeft();
     void dropLine();
-    Location loc();
     Token makeNumber();
 };
 
