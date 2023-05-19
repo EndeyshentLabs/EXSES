@@ -78,6 +78,14 @@ void Lexer::tokenize()
             token.type = SAVE;
         } else if (token.text == "^") {
             token.type = LOAD;
+        } else if (token.text == ".?") {
+            token.type = TERNARY;
+        } else if (token.text == "true") {
+            token.type = PUSH;
+            token.text = "1";
+        } else if (token.text == "false") {
+            token.type = PUSH;
+            token.text = "0";
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
         }
@@ -176,6 +184,22 @@ void Lexer::intrepret()
                     makeError(token, "There is no bind with that name!");
                 stack.push_back(storage[name]);
             } break;
+            case TERNARY: {
+                if (stack.size() < 3)
+                    makeError(token, "Not enough elements on the stack!");
+                int cond = stack.back();
+                stack.pop_back();
+                int alt = stack.back();
+                stack.pop_back();
+                int main = stack.back();
+                stack.pop_back();
+
+                if (cond) {
+                    stack.push_back(main);
+                } else {
+                    stack.push_back(alt);
+                }
+            } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
                 std::exit(1);
@@ -229,6 +253,10 @@ void Lexer::compileToPython3()
                 std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
                 std::exit(1);
             } break;
+            case TERNARY: {
+                std::cerr << "ERROR: Ternary operator is not implemented in python3 mode!\n";
+                std::exit(1);
+            }
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
                 std::exit(1);

@@ -16,7 +16,8 @@ enum TokenType
     DUMP,
     BIND,
     SAVE,
-    LOAD
+    LOAD,
+    TERNARY // NOTE: Maybe IFX?
 };
 
 struct Token
