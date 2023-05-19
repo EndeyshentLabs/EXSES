@@ -15,6 +15,7 @@ enum TokenType
     DIV,
     DUMP,
     BIND,
+    SAVE,
     LOAD
 };
 
