@@ -13,7 +13,9 @@ enum TokenType
     MINUS,
     MULT,
     DIV,
-    DUMP
+    DUMP,
+    BIND,
+    LOAD
 };
 
 struct Token

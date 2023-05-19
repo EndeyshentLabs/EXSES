@@ -72,6 +72,10 @@ void Lexer::tokenize()
             token.type = SWAP;
         } else if (token.text == "!")  {
             token.type = DUMP;
+        } else if (token.text == "<-") {
+            token.type = BIND;
+        } else if (token.text == "^") {
+            token.type = LOAD;
         } else {
             makeError(token, "Unexpected token `" + token.text + "`\n");
         }
@@ -140,6 +144,24 @@ void Lexer::intrepret()
                 int a = stack.back();
                 stack.pop_back();
                 std::cout << a << '\n';
+            } break;
+            case BIND: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
+                int value = stack.back();
+                stack.pop_back();
+                int name = stack.back();
+                stack.pop_back();
+                if (storage.contains(name))
+                    makeError(token, "There is a bind with the same name!\n");
+                storage[name] = value;
+            } break;
+            case LOAD: {
+                int name = stack.back();
+                stack.pop_back();
+                if (!storage.contains(name))
+                    makeError(token, "There is no bind with that name!\n");
+                stack.push_back(storage[name]);
             } break;
             default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; std::exit(1); } break;
         }

@@ -13,6 +13,8 @@ syntax match xesOperators '/'
 syntax match xesOperators '&'
 syntax match xesOperators '\$'
 syntax match xesOperators '!'
+syntax match xesOperators '<-'
+syntax match xesOperators '\^'
 
 syntax match xesNumber "\v<\d+>"
 syntax match xesNumber "\v-<\d+>"
