@@ -2,12 +2,30 @@
 
 ## Example
 
+### Basic
+
 ```bash
 20 10 + ! # Will output the '30'
 # Raise 5 to the power of 2
 5 & # `&` will duplicate top value e.g '5'
 * # Multiply
 ! # Output
+```
+
+### More advanced
+
+```bash
+# bind 500 to '1100'
+1100 500 <-
+# bind 80 to '1101'
+1101 80 <-
+
+# load value of '1100' (e.g 500)
+1100 ^
+# load value of '1101' (e.g 80)
+1101 ^
+- # subtract
+! # print (420)
 ```
 
 ## Build-it
