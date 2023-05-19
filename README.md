@@ -22,5 +22,6 @@ $ cmake -G Ninja -B build
 $ cmake --build build
 $ vim test.xes
 ... WRITING ...
-$ ./build/exsi test.xes
+$ ./build/exsi exsi test.xes # intrepret
+$ ./build/exsi python3 test.xes # compile to python3
 ```
