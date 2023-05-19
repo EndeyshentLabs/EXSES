@@ -163,7 +163,10 @@ void Lexer::intrepret()
                     makeError(token, "There is no bind with that name!\n");
                 stack.push_back(storage[name]);
             } break;
-            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; std::exit(1); } break;
+            case UNDEFINED: {
+                std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
+                std::exit(1);
+            } break;
         }
     }
 }
@@ -201,7 +204,18 @@ void Lexer::compileToPython3()
             case DUMP: {
                 output.append("print(stack.pop())\n");
             } break;
-            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; std::exit(1); } break;
+            case BIND: {
+                std::cerr << "ERROR: Binds is not implemented in python3 mode!\n";
+                std::exit(1);
+            } break;
+            case LOAD: {
+                std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
+                std::exit(1);
+            } break;
+            case UNDEFINED: {
+                std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
+                std::exit(1);
+            } break;
         }
     }
 
