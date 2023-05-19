@@ -77,7 +77,7 @@ void Lexer::tokenize()
         } else if (token.text == "^") {
             token.type = LOAD;
         } else {
-            makeError(token, "Unexpected token `" + token.text + "`\n");
+            makeError(token, "Unexpected token `" + token.text + "`");
         }
     }
 }
@@ -94,7 +94,7 @@ void Lexer::intrepret()
             } break;
             case SWAP: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -104,7 +104,7 @@ void Lexer::intrepret()
             } break;
             case PLUS: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -113,7 +113,7 @@ void Lexer::intrepret()
             } break;
             case MINUS: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -122,7 +122,7 @@ void Lexer::intrepret()
             } break;
             case MULT: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -131,7 +131,7 @@ void Lexer::intrepret()
             } break;
             case DIV: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -140,27 +140,27 @@ void Lexer::intrepret()
             } break;
             case DUMP: {
                 if (stack.size() < 1)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int a = stack.back();
                 stack.pop_back();
                 std::cout << a << '\n';
             } break;
             case BIND: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!\n");
+                    makeError(token, "Not enough elements on the stack!");
                 int value = stack.back();
                 stack.pop_back();
                 int name = stack.back();
                 stack.pop_back();
                 if (storage.contains(name))
-                    makeError(token, "There is a bind with the same name!\n");
+                    makeError(token, "There is a bind with the same name!");
                 storage[name] = value;
             } break;
             case LOAD: {
                 int name = stack.back();
                 stack.pop_back();
                 if (!storage.contains(name))
-                    makeError(token, "There is no bind with that name!\n");
+                    makeError(token, "There is no bind with that name!");
                 stack.push_back(storage[name]);
             } break;
             case UNDEFINED: {
