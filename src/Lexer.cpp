@@ -55,26 +55,25 @@ void Lexer::tokenize()
         lineCount++;
     }
 
-    for (auto& el : program) {
-        if (isInteger(el.text)) {
-            el.type = PUSH;
-        } else if (el.text == "+")  {
-            el.type = PLUS;
-        } else if (el.text == "-")  {
-            el.type = MINUS;
-        } else if (el.text == "*")  {
-            el.type = MULT;
-        } else if (el.text == "/")  {
-            el.type = DIV;
-        } else if (el.text == "&")  {
-            el.type = DUP;
-        } else if (el.text == "$")  {
-            el.type = SWAP;
-        } else if (el.text == "!")  {
-            el.type = DUMP;
+    for (auto& token : program) {
+        if (isInteger(token.text)) {
+            token.type = PUSH;
+        } else if (token.text == "+")  {
+            token.type = PLUS;
+        } else if (token.text == "-")  {
+            token.type = MINUS;
+        } else if (token.text == "*")  {
+            token.type = MULT;
+        } else if (token.text == "/")  {
+            token.type = DIV;
+        } else if (token.text == "&")  {
+            token.type = DUP;
+        } else if (token.text == "$")  {
+            token.type = SWAP;
+        } else if (token.text == "!")  {
+            token.type = DUMP;
         } else {
-            std::cerr << fileName << ":" << el.line + 1 << ":" << el.col + 1 << ": ERROR: Unexpected token `" << el.text << "`\n";
-            std::exit(1);
+            makeError(token, "Unexpected token `" + token.text + "`\n");
         }
     }
 }
@@ -90,6 +89,8 @@ void Lexer::intrepret()
                 stack.push_back(stack.back());
             } break;
             case SWAP: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -98,6 +99,8 @@ void Lexer::intrepret()
                 stack.push_back(b);
             } break;
             case PLUS: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -105,6 +108,8 @@ void Lexer::intrepret()
                 stack.push_back(a + b);
             } break;
             case MINUS: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -112,6 +117,8 @@ void Lexer::intrepret()
                 stack.push_back(b - a);
             } break;
             case MULT: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -119,6 +126,8 @@ void Lexer::intrepret()
                 stack.push_back(a * b);
             } break;
             case DIV: {
+                if (stack.size() < 2)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -126,11 +135,13 @@ void Lexer::intrepret()
                 stack.push_back(b / a);
             } break;
             case DUMP: {
+                if (stack.size() < 1)
+                    makeError(token, "Not enough elements on the stack!\n");
                 int a = stack.back();
                 stack.pop_back();
                 std::cout << a << '\n';
             } break;
-            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; } break;
+            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; std::exit(1); } break;
         }
     }
 }
@@ -141,10 +152,10 @@ void Lexer::compileToPython3()
     output.append("#!/usr/bin/env python3\nstack = []\n");
     std::vector<int> stack;
 
-    for (auto op : program) {
-        switch (op.type) {
+    for (auto token : program) {
+        switch (token.type) {
             case PUSH: {
-                output.append("stack.append(" + op.text + ")\n");
+                output.append("stack.append(" + token.text + ")\n");
             } break;
             case DUP: {
                 output.append("stack.append(stack[len(stack) - 1])\n");
@@ -169,7 +180,7 @@ void Lexer::compileToPython3()
             case DUMP: {
                 output.append("print(stack.pop())\n");
             } break;
-            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; } break;
+            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; std::exit(1); } break;
         }
     }
 
@@ -182,6 +193,7 @@ void Lexer::run()
     if (this->target == EXSI) {
         this->intrepret();
     } else if (this->target == PYTHON3) {
+        std::cerr << "WARNING: Python3 mode is not fininised yet! It's not recomended to use this mode right now!\n";
         this->compileToPython3();
     }
 }
@@ -191,7 +203,7 @@ void Lexer::nextToken()
     this->trimLeft();
     while (this->isNotEmpty()) {
         std::string s = source.substr(this->cur);
-        if (!s.starts_with(";") && !s.starts_with("//")) { break; }
+        if (!s.starts_with("#") && !s.starts_with("//")) { break; }
         this->dropLine();
         this->trimLeft();
     }
@@ -225,4 +237,10 @@ void Lexer::dropLine()
     if (this->isNotEmpty()) {
         this->chopChar();
     }
+}
+
+void Lexer::makeError(Token token, std::string text)
+{
+    std::cerr << fileName << ":" << token.line + 1 << ":" << token.col + 1 << ": ERROR: " << text << '\n';
+    std::exit(1);
 }

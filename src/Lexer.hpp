@@ -35,6 +35,7 @@ private:
     void trimLeft();
     void dropLine();
     Token makeNumber();
+    void makeError(Token token, std::string text);
 };
 
 #endif /* EXSES_LEXER_H */
