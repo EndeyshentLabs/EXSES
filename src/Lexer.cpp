@@ -27,6 +27,7 @@ int chopWord(std::string line, int col)
     }
     return col;
 }
+
 void Lexer::tokenize()
 {
     std::vector<std::string> lines = split(source, "\\n");
@@ -122,7 +123,7 @@ void Lexer::parse()
                 stack.pop_back();
                 int b = stack.back();
                 stack.pop_back();
-                stack.push_back(a / b);
+                stack.push_back(b / a);
             } break;
             case DUMP: {
                 int a = stack.back();
