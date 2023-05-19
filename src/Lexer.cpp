@@ -150,7 +150,6 @@ void Lexer::compileToPython3()
 {
     std::string output;
     output.append("#!/usr/bin/env python3\nstack = []\n");
-    std::vector<int> stack;
 
     for (auto token : program) {
         switch (token.type) {
