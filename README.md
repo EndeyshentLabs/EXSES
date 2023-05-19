@@ -2,7 +2,7 @@
 
 ## Example
 
-```forth
+```bash
 20 10 + ! # Will output the '30'
 # Raise 5 to the power of 2
 5 & # `&` will duplicate top value e.g '5'
