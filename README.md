@@ -2,7 +2,7 @@
 
 **WARNING: THIS PROGRAMMING LANGUAGE IS UNFINISHED! EVERYTHING MAY CHANGE IN THE FUTURE!** 
 
-![exses logo](./assets/logo1.png)
+<img src="./assets/logo1.png" alt="EXSES logp" width="128" />
 EXSES - smol stack-oriented concatenative programming language. Development have just started: do not expect something revolutionary new.
 
 ## Example
