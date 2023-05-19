@@ -79,7 +79,7 @@ void Lexer::tokenize()
     }
 }
 
-void Lexer::parse()
+void Lexer::intrepret()
 {
     for (Token token : this->program) {
         switch (token.type) {
@@ -135,13 +135,54 @@ void Lexer::parse()
     }
 }
 
-void Lexer::intrepret()
+void Lexer::compileToPython3()
+{
+    std::string output;
+    output.append("#!/usr/bin/env python3\nstack = []\n");
+    std::vector<int> stack;
+
+    for (auto op : program) {
+        switch (op.type) {
+            case PUSH: {
+                output.append("stack.append(" + op.text + ")\n");
+            } break;
+            case DUP: {
+                output.append("stack.append(stack[len(stack) - 1])\n");
+            } break;
+            case SWAP: {
+                // WARNING: Weird code ahead!
+                output.append("stack.append(stack.pop(0))\n");
+                output.append("stack.append(stack.pop(1))\n");
+            } break;
+            case PLUS: {
+                output.append("stack.append(stack.pop() + stack.pop())\n");
+            } break;
+            case MINUS: {
+                output.append("stack.append(stack.pop(0) - stack.pop())\n");
+            } break;
+            case MULT: {
+                output.append("stack.append(stack.pop() * stack.pop())\n");
+            } break;
+            case DIV: {
+                output.append("stack.append(stack.pop(0) / stack.pop())\n");
+            } break;
+            case DUMP: {
+                output.append("print(stack.pop())\n");
+            } break;
+            default: { std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n"; } break;
+        }
+    }
+
+    std::cout << output;
+}
+
+void Lexer::run()
 {
     this->tokenize();
     if (this->target == EXSI) {
-        this->parse();
-    } else {
-        std::cerr << "ERROR: Only exsi target is supported!";
+        this->intrepret();
+    } else if (this->target == PYTHON3) {
+        this->compileToPython3();
     }
 }
 

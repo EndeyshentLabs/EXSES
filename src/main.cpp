@@ -1,62 +1,46 @@
 #include <Lexer.hpp>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
 
-#if 0
-void convertToPython3(std::vector<Token> program)
+void header()
 {
-    std::string output;
-    output.append("#!/usr/bin/env python3\nstack = []\n");
-    std::vector<int> stack;
-
-    for (auto op : program) {
-        switch (op.type) {
-            case PUSH: {
-                output.append("stack.append(" + std::to_string(op.getValue()) + ")\n");
-            } break;
-            case DUP: {
-                output.append("stack.append(stack[len(stack) - 1])\n");
-            } break;
-            case SWAP: {
-                // WARNING: Weird code ahead!
-                output.append("stack.append(stack.pop(0))\n");
-                output.append("stack.append(stack.pop(1))\n");
-            } break;
-            case PLUS: {
-                output.append("stack.append(stack.pop() + stack.pop())\n");
-            } break;
-            case MINUS: {
-                output.append("stack.append(stack.pop(0) - stack.pop())\n");
-            } break;
-            case MULT: {
-                output.append("stack.append(stack.pop() * stack.pop())\n");
-            } break;
-            case DIV: {
-                output.append("stack.append(stack.pop() / stack.pop())\n");
-            } break;
-            case DUMP: {
-                output.append("print(stack.pop())\n");
-            } break;
-        }
-    }
-
-    std::cout << output;
+    std::cout << "EXSI - EXSES intrepreter and compiler.\n";
+    std::cout << "Version 0.2.0\n";
 }
-#endif
 
-int main(int argc, char* argv[])
+void usage(char** argv)
+{
+    header();
+    std::cout << "Usage: " << argv[0] << " <mode> <file>\n";
+    std::cout << "Modes:\n";
+    std::cout << "    exsi    - native EXSES intrepreter.\n";
+    std::cout << "    python3 - compile EXSES code to Python 3.\n";
+}
+
+int main(int argc, char** argv)
 {
     Target target = EXSI;
     std::ifstream sourceFile;
     std::string sourceFileContents;
 
-    if (argc < 2) {
+    if (argc < 3) {
+        usage(argv);
         std::cerr << "ERROR: Not enough arguments is provided!\n";
         return 1;
     }
 
-    sourceFile.open(argv[1], std::ios::in);
+    if (std::strcmp(argv[1], "exsi") == 0) {
+        target = EXSI;
+    } else if (std::strcmp(argv[1], "python3") == 0) {
+        target = PYTHON3;
+    } else {
+        usage(argv);
+        std::cerr << "ERROR: Unknown mode `" << argv[1] << "`\n";
+    }
+
+    sourceFile.open(argv[2], std::ios::in);
     if (sourceFile.is_open()) {
         std::string line;
 
@@ -65,10 +49,10 @@ int main(int argc, char* argv[])
         }
         sourceFile.close();
 
-        Lexer lexer(argv[1], sourceFileContents, target);
-        lexer.intrepret();
+        Lexer lexer(argv[2], sourceFileContents, target);
+        lexer.run();
     } else {
-        std::cerr << "ERROR: Couldn't open a file '" << argv[1] << "'!\n";
+        std::cerr << "ERROR: Couldn't open a file '" << argv[2] << "'!\n";
         return 1;
     }
 

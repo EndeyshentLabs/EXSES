@@ -17,8 +17,9 @@ public:
     Lexer(std::string fileName, std::string source, Target target);
     Target target;
     void tokenize();
-    void parse();
     void intrepret();
+    void compileToPython3();
+    void run();
 private:
     std::string source;
     std::string fileName;
