@@ -68,6 +68,8 @@ void Lexer::tokenize()
             token.type = DIV;
         } else if (token.text == "&")  {
             token.type = DUP;
+        } else if (token.text == "_")  {
+            token.type = DROP;
         } else if (token.text == "$")  {
             token.type = SWAP;
         } else if (token.text == "!")  {
@@ -101,6 +103,11 @@ void Lexer::intrepret()
             } break;
             case DUP: {
                 stack.push_back(stack.back());
+            } break;
+            case DROP: {
+                if (stack.size() < 1)
+                    makeError(token, "Not enough elements on the stack!");
+                stack.pop_back();
             } break;
             case SWAP: {
                 if (stack.size() < 2)
@@ -220,6 +227,9 @@ void Lexer::compileToPython3()
             } break;
             case DUP: {
                 output.append("stack.append(stack[len(stack) - 1])\n");
+            } break;
+            case DROP: {
+                output.append("stack.pop()");
             } break;
             case SWAP: {
                 // WARNING: Weird code ahead!
