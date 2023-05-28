@@ -1,5 +1,6 @@
 #include <Lexer.hpp>
 
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,6 +8,7 @@
 
 #include <utils.hpp>
 #include <Token.hpp>
+#include <Procedure.hpp>
 
 Lexer::Lexer(std::string fileName, std::string source, Target target) : target(target), source(source), fileName(fileName)
 {
@@ -82,6 +84,12 @@ void Lexer::tokenize()
             token.type = LOAD;
         } else if (token.text == ".?") {
             token.type = TERNARY;
+        } else if (token.text == "'") {
+            token.type = MAKEPROC;
+        } else if (token.text == "\"") {
+            token.type = ENDPROC;
+        } else if (token.text == ":") {
+            token.type = INVOKEPROC;
         } else if (token.text == "true") {
             token.type = PUSH;
             token.text = "1";
@@ -94,9 +102,14 @@ void Lexer::tokenize()
     }
 }
 
-void Lexer::intrepret()
+void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
 {
-    for (Token token : this->program) {
+    if (!insideOfProc && procBody.size() != 0) {
+        std::cerr << "ERROR: procedure body outside of procedure";
+        std::exit(1);
+    }
+    for (Token token : (insideOfProc ? procBody : this->program)) {
+        if (!token.enabled && !insideOfProc) { continue; }
         switch (token.type) {
             case PUSH: {
                 stack.push_back(stoi(token.text));
@@ -207,6 +220,60 @@ void Lexer::intrepret()
                     stack.push_back(alt);
                 }
             } break;
+            case MAKEPROC: {
+                if (stack.size() < 1)
+                    makeError(token, "Not enough elements on the stack!");
+                int name = stack.back();
+                for (XesProcedure proc : procedureStorage) {
+                    if (proc.name == name) {
+                        makeError(token, "There is the procedure with the same name!");
+                    }
+                }
+                stack.pop_back();
+                std::vector<Token> body;
+                bool hasEnd = false;
+                for (auto& op : program) {
+                    if (op.line < token.line || op.col < token.col || op.type == MAKEPROC) continue;
+                    if (op.type == ENDPROC) {
+                        hasEnd = true;
+                        break;
+                    }
+                    op.enabled = false;
+                    body.push_back(op);
+                }
+                if (!hasEnd) {
+                    makeError(token, "Unclosed procedure '" + std::to_string(name) + "'");
+                }
+                XesProcedure proc(token.line, token.col, name, body);
+#               if defined(PROCEDURE_DEBUG)
+                std::printf("%s:\tDEBUG: name: %d, body:\n", tokenLocation(token).c_str(), proc.name);
+                for (auto op : proc.getBody()) {
+                    std::printf("%s:\ttype: %s, text: '%s', enabled: %d\n", tokenLocation(op).c_str(), TokenTypeString[op.type].c_str(), op.text.c_str(), op.enabled);
+                }
+#               endif
+                procedureStorage.push_back(proc);
+            } break;
+            case ENDPROC: {
+                // TODO: do something?
+            } break;
+            case INVOKEPROC: {
+                if (stack.size() < 1)
+                    makeError(token, "Not enough elements on the stack!");
+                int name = stack.back();
+                stack.pop_back();
+                bool found = false;
+                for (XesProcedure proc : procedureStorage) {
+                    if (proc.name == name) {
+                        intrepret(true, proc.getBody());
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    makeError(token, "No such procedure '" + std::to_string(name) + "'");
+                }
+                // makeError(token, "Procedures is not implemented yet!");
+            } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
                 std::exit(1);
@@ -267,6 +334,18 @@ void Lexer::compileToPython3()
                 std::cerr << "ERROR: Ternary operator is not implemented in python3 mode!\n";
                 std::exit(1);
             }
+            case MAKEPROC: {
+                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
+                std::exit(1);
+            }
+            case ENDPROC: {
+                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
+                std::exit(1);
+            }
+            case INVOKEPROC: {
+                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
+                std::exit(1);
+            }
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
                 std::exit(1);
@@ -290,6 +369,11 @@ void Lexer::run()
 
 void Lexer::makeError(Token token, std::string text)
 {
-    std::cerr << fileName << ":" << token.line + 1 << ":" << token.col + 1 << ": ERROR: " << text << '\n';
+    std::cerr << tokenLocation(token) << ": ERROR: " << text << '\n';
     std::exit(1);
+}
+
+std::string Lexer::tokenLocation(Token token)
+{
+    return fileName + ":" + std::to_string(token.line + 1) + ":" + std::to_string(token.col + 1);
 }
