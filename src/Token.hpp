@@ -17,8 +17,13 @@ enum TokenType
     BIND,
     SAVE,
     LOAD,
-    TERNARY // NOTE: Maybe IFX?
+    TERNARY, // NOTE: Maybe IFX?
+    MAKEPROC,
+    ENDPROC,
+    INVOKEPROC
 };
+
+extern std::string TokenTypeString[];
 
 struct Token
 {
@@ -26,6 +31,7 @@ struct Token
     int col;
     TokenType type;
     std::string text;
+    bool enabled = true;
 };
 
 #endif /* EXSES_TOKEN_H */

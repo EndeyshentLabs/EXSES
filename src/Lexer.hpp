@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <Token.hpp>
+#include <Procedure.hpp>
 
 enum Target {
     PYTHON3,
@@ -18,7 +19,7 @@ public:
     Lexer(std::string fileName, std::string source, Target target);
     Target target;
     void tokenize();
-    void intrepret();
+    void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});
     void compileToPython3();
     void run();
 private:
@@ -27,7 +28,9 @@ private:
     std::vector<Token> program;
     std::vector<int> stack;
     std::map<int, int> storage;
+    std::vector<XesProcedure> procedureStorage;
     void makeError(Token token, std::string text);
+    std::string tokenLocation(Token token);
 };
 
 #endif /* EXSES_LEXER_H */
