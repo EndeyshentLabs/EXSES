@@ -16,5 +16,13 @@ std::string TokenTypeString[] = {
     "TERNARY",
     "MAKEPROC",
     "ENDPROC",
-    "INVOKEPROC"
+    "INVOKEPROC",
+    "IF",
+    "ENDIF",
+    "EQUAL",
+    "NOTEQUAL",
+    "LESS",
+    "LESSEQUAL",
+    "GREATER",
+    "GREATEREQUAL"
 };

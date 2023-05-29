@@ -110,6 +110,22 @@ void Lexer::tokenize()
             token.type = ENDPROC;
         } else if (token.text == ":") {
             token.type = INVOKEPROC;
+        } else if (token.text == "(") {
+            token.type = IF;
+        } else if (token.text == ")") {
+            token.type = ENDIF;
+        } else if (token.text == "=") {
+            token.type = EQUAL;
+        } else if (token.text == "<>") {
+            token.type = NOTEQUAL;
+        } else if (token.text == "<") {
+            token.type = LESS;
+        } else if (token.text == "<=") {
+            token.type = LESSEQUAL;
+        } else if (token.text == ">") {
+            token.type = GREATER;
+        } else if (token.text == ">=") {
+            token.type = GREATEREQUAL;
         } else if (token.text == "true") {
             token.type = PUSH;
             token.text = "1";
@@ -268,6 +284,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 }
             } break;
             case MAKEPROC: {
+                if (inside) {
+                    makeError(token, "Possible procedure inside of another procedure");
+                    std::exit(1);
+                }
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
                     std::exit(1);
@@ -283,9 +303,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 stack.pop_back();
                 std::vector<Token> body;
                 bool hasEnd = false;
-                for (auto& op : program) {
-                    if (op.line < token.line || op.col < token.col || op.type == MAKEPROC) continue;
-                    if (op.type == ENDPROC) {
+                for (Token& op : program) {
+                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == MAKEPROC) continue;
+                    if (op.type == ENDPROC && op.enabled) {
                         op.enabled = false;
                         hasEnd = true;
                         break;
@@ -325,6 +345,106 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     makeError(token, "No such procedure '" + std::to_string(name) + "'");
                     std::exit(1);
                 }
+            } break;
+            case IF: {
+                if (inside) break;
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack! Expected condition.");
+                    std::exit(1);
+                }
+                int cond = stack.back();
+                stack.pop_back();
+                std::vector<Token> body;
+                bool hasEnd = false;
+                for (auto& op : program) {
+                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == IF) continue;
+                    if (op.type == ENDIF) {
+                        hasEnd = true;
+                        op.enabled = false;
+                        break;
+                    }
+                    op.enabled = false;
+                    body.push_back(op);
+                }
+                if (!hasEnd) {
+                    makeError(token, "Unclosed IF");
+                    std::exit(1);
+                }
+                if (cond) {
+                    intrepret(true, body);
+                }
+            } break;
+            case ENDIF: {
+                if (token.enabled) {
+                    makeError(token, "Closing IF statement outside of IF statement");
+                    std::exit(1);
+                }
+            } break;
+            case EQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b == a);
+            } break;
+            case NOTEQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b != a);
+            } break;
+            case LESS: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b < a);
+            } break;
+            case LESSEQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b <= a);
+            } break;
+            case GREATER: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b > a);
+            } break;
+            case GREATEREQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b >= a);
             } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";

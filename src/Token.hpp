@@ -18,10 +18,18 @@ enum TokenType
     BIND,
     SAVE,
     LOAD,
-    TERNARY, // NOTE: Maybe IFX?
+    TERNARY,
     MAKEPROC,
     ENDPROC,
-    INVOKEPROC
+    INVOKEPROC,
+    IF,
+    ENDIF,
+    EQUAL,
+    NOTEQUAL,
+    LESS,
+    LESSEQUAL,
+    GREATER,
+    GREATEREQUAL
 };
 
 extern std::string TokenTypeString[];
