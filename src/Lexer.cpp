@@ -102,14 +102,14 @@ void Lexer::tokenize()
     }
 }
 
-void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
+void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 {
-    if (!insideOfProc && procBody.size() != 0) {
-        std::cerr << "ERROR: procedure body outside of procedure";
+    if (!inside && procBody.size() != 0) {
+        std::cerr << "ERROR: EndeyshentLabs did something wrong! OMEGALUL\n";
         std::exit(1);
     }
-    for (Token token : (insideOfProc ? procBody : this->program)) {
-        if (!token.enabled && !insideOfProc) { continue; }
+    for (Token token : (inside ? procBody : this->program)) {
+        if (!token.enabled && !inside) { continue; }
         switch (token.type) {
             case PUSH: {
                 stack.push_back(stoi(token.text));
