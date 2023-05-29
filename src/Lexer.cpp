@@ -334,80 +334,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
     }
 }
 
-void Lexer::compileToPython3()
-{
-    std::string output;
-    output.append("#!/usr/bin/env python3\nstack = []\n");
-
-    for (auto token : program) {
-        switch (token.type) {
-            case PUSH: {
-                output.append("stack.append(" + token.text + ")\n");
-            } break;
-            case DUP: {
-                output.append("stack.append(stack[len(stack) - 1])\n");
-            } break;
-            case DROP: {
-                output.append("stack.pop()");
-            } break;
-            case SWAP: {
-                // WARNING: Weird code ahead!
-                output.append("stack.append(stack.pop(0))\n");
-                output.append("stack.append(stack.pop(1))\n");
-            } break;
-            case PLUS: {
-                output.append("stack.append(stack.pop() + stack.pop())\n");
-            } break;
-            case MINUS: {
-                output.append("stack.append(stack.pop(0) - stack.pop())\n");
-            } break;
-            case MULT: {
-                output.append("stack.append(stack.pop() * stack.pop())\n");
-            } break;
-            case DIV: {
-                output.append("stack.append(stack.pop(0) / stack.pop())\n");
-            } break;
-            case DUMP: {
-                output.append("print(stack.pop())\n");
-            } break;
-            case BIND: {
-                std::cerr << "ERROR: Binds is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case SAVE: {
-                std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case LOAD: {
-                std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case TERNARY: {
-                std::cerr << "ERROR: Ternary operator is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case MAKEPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case ENDPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case INVOKEPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case UNDEFINED: {
-                std::cerr << "ERROR: UNREACHABLE\n";
-                std::exit(1);
-            } break;
-        }
-    }
-
-    std::cout << output;
-}
-
 void Lexer::run()
 {
     this->tokenize();
@@ -419,9 +345,9 @@ void Lexer::run()
 #   endif
     if (this->target == EXSI) {
         this->intrepret();
-    } else if (this->target == PYTHON3) {
-        std::cerr << "WARNING: Python3 mode is not fininised yet! It's not recomended to use this mode right now!\n";
-        this->compileToPython3();
+    } else {
+        std::cerr << "Only EXSI target is supported right now!\n";
+        std::exit(1);
     }
 }
 
