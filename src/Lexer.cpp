@@ -14,7 +14,7 @@ Lexer::Lexer(std::string fileName, std::string source, Target target) : target(t
 {
 }
 
-int stripByCol(std::string line, int col)
+int stripByCol(std::string line, unsigned int col)
 {
     while (col < line.length() && !std::isspace(line[col])) {
         col++;
@@ -22,7 +22,7 @@ int stripByCol(std::string line, int col)
     return col;
 }
 
-int chopWord(std::string line, int col)
+int chopWord(std::string line, unsigned int col)
 {
     while (col < line.length() && std::isspace(line[col])) {
         col++;
@@ -36,8 +36,8 @@ void Lexer::tokenize()
     unsigned int lineCount = 0;
 
     for (std::string line : lines) {
-        int col = chopWord(line, 0);
-        int colEnd = 0;
+        unsigned int col = chopWord(line, 0);
+        unsigned int colEnd = 0;
 
         if (line.find("#") != std::string::npos) {
             line = line.substr(0, line.find("#"));
@@ -47,9 +47,9 @@ void Lexer::tokenize()
             colEnd = stripByCol(line, col);
             if (line.substr(col, colEnd).find(" ") != std::string::npos) {
                 auto list = split(line.substr(col, colEnd), "\\s");
-                this->program.push_back(Token{ static_cast<int>(lineCount), col, UNDEFINED, list.front() });
+                this->program.push_back(Token{ lineCount, col, UNDEFINED, list.front() });
             } else {
-                this->program.push_back(Token{ static_cast<int>(lineCount), col, UNDEFINED, line.substr(col, colEnd) });
+                this->program.push_back(Token{ lineCount, col, UNDEFINED, line.substr(col, colEnd) });
             }
             col = chopWord(line, colEnd);
         }

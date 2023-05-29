@@ -28,8 +28,8 @@ extern std::string TokenTypeString[];
 
 struct Token
 {
-    int line;
-    int col;
+    unsigned int line;
+    unsigned int col;
     TokenType type;
     std::string text;
     bool enabled = true;
