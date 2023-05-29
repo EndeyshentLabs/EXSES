@@ -21,11 +21,4 @@ add_executable(
 
 target_include_directories(exsi PUBLIC src)
 
-target_compile_options(exsi PRIVATE -Wall -Wextra -O2 -pedantic -Werror=switch -fdiagnostics-color)
-
-# TODO: Make debug compilation target. Stub:
-# add_custom_target(debug)
-# if(TARGET debug)
-#     target_compile_definitions(exsi PUBLIC -DPROCEDURE_DEBUG)
-# endif()
-# add_dependencies(debug exsi)
+target_compile_options(exsi PRIVATE -Wall -Wextra -pedantic -Werror=switch -fdiagnostics-color)

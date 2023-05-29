@@ -246,12 +246,6 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                     makeError(token, "Unclosed procedure '" + std::to_string(name) + "'");
                 }
                 XesProcedure proc(token.line, token.col, name, body);
-#               if defined(PROCEDURE_DEBUG)
-                std::printf("%s:\tDEBUG: name: %d, body:\n", tokenLocation(token).c_str(), proc.name);
-                for (auto op : proc.getBody()) {
-                    std::printf("%s:\ttype: %s, text: '%s', enabled: %d\n", tokenLocation(op).c_str(), TokenTypeString[op.type].c_str(), op.text.c_str(), op.enabled);
-                }
-#               endif
                 procedureStorage.push_back(proc);
             } break;
             case ENDPROC: {
@@ -362,6 +356,12 @@ void Lexer::compileToPython3()
 void Lexer::run()
 {
     this->tokenize();
+#   if !defined(NDEBUG)
+    std::cout << "Program:\n";
+    for (Token token : program) {
+        std::printf("%s: type: %s, text: `%s`, enabled: %s\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str(), (token.enabled) ? "true" : "false");
+    }
+#   endif
     if (this->target == EXSI) {
         this->intrepret();
     } else if (this->target == PYTHON3) {
