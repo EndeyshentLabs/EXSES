@@ -235,6 +235,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 for (auto& op : program) {
                     if (op.line < token.line || op.col < token.col || op.type == MAKEPROC) continue;
                     if (op.type == ENDPROC) {
+                        op.enabled = false;
                         hasEnd = true;
                         break;
                     }
@@ -254,7 +255,9 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 procedureStorage.push_back(proc);
             } break;
             case ENDPROC: {
-                // TODO: do something?
+                if (token.enabled) {
+                    makeError(token, "Closing the procedure outside of any procedure!");
+                }
             } break;
             case INVOKEPROC: {
                 if (stack.size() < 1)
