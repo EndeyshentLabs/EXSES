@@ -9,7 +9,6 @@
 #include <Procedure.hpp>
 
 enum Target {
-    PYTHON3,
     EXSI
 };
 

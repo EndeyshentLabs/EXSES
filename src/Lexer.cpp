@@ -110,12 +110,32 @@ void Lexer::tokenize()
             token.type = ENDPROC;
         } else if (token.text == ":") {
             token.type = INVOKEPROC;
+        } else if (token.text == "(") {
+            token.type = IF;
+        } else if (token.text == ")") {
+            token.type = ENDIF;
+        } else if (token.text == "=") {
+            token.type = EQUAL;
+        } else if (token.text == "<>") {
+            token.type = NOTEQUAL;
+        } else if (token.text == "<") {
+            token.type = LESS;
+        } else if (token.text == "<=") {
+            token.type = LESSEQUAL;
+        } else if (token.text == ">") {
+            token.type = GREATER;
+        } else if (token.text == ">=") {
+            token.type = GREATEREQUAL;
+        } else if (token.text == "||") {
+            token.type = LOR;
+        } else if (token.text == "&&") {
+            token.type = LAND;
+        } else if (token.text == "!!") {
+            token.type = LNOT;
         } else if (token.text == "true") {
-            token.type = PUSH;
-            token.text = "1";
+            token.type = TRUE;
         } else if (token.text == "false") {
-            token.type = PUSH;
-            token.text = "0";
+            token.type = FALSE;
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
             std::exit(1);
@@ -268,6 +288,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 }
             } break;
             case MAKEPROC: {
+                if (inside) {
+                    makeError(token, "Possible procedure inside of another procedure");
+                    std::exit(1);
+                }
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
                     std::exit(1);
@@ -283,9 +307,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 stack.pop_back();
                 std::vector<Token> body;
                 bool hasEnd = false;
-                for (auto& op : program) {
-                    if (op.line < token.line || op.col < token.col || op.type == MAKEPROC) continue;
-                    if (op.type == ENDPROC) {
+                for (Token& op : program) {
+                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == MAKEPROC) continue;
+                    if (op.type == ENDPROC && op.enabled) {
                         op.enabled = false;
                         hasEnd = true;
                         break;
@@ -326,86 +350,149 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
             } break;
+            case IF: {
+                if (inside) break;
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack! Expected condition.");
+                    std::exit(1);
+                }
+                int cond = stack.back();
+                stack.pop_back();
+                std::vector<Token> body;
+                bool hasEnd = false;
+                for (auto& op : program) {
+                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == IF) continue;
+                    if (op.type == ENDIF) {
+                        hasEnd = true;
+                        op.enabled = false;
+                        break;
+                    }
+                    op.enabled = false;
+                    body.push_back(op);
+                }
+                if (!hasEnd) {
+                    makeError(token, "Unclosed IF");
+                    std::exit(1);
+                }
+                if (cond) {
+                    intrepret(true, body);
+                }
+            } break;
+            case ENDIF: {
+                if (token.enabled) {
+                    makeError(token, "Closing IF statement outside of IF statement");
+                    std::exit(1);
+                }
+            } break;
+            case EQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b == a);
+            } break;
+            case NOTEQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b != a);
+            } break;
+            case LESS: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b < a);
+            } break;
+            case LESSEQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b <= a);
+            } break;
+            case GREATER: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b > a);
+            } break;
+            case GREATEREQUAL: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b >= a);
+            } break;
+            case LOR: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b || a);
+            } break;
+            case LAND: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b && a);
+            } break;
+            case LNOT: {
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                stack.push_back(!a);
+            } break;
+            case TRUE: {
+                stack.push_back(1);
+            } break;
+            case FALSE: {
+                stack.push_back(0);
+            } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";
                 std::exit(1);
             } break;
         }
     }
-}
-
-void Lexer::compileToPython3()
-{
-    std::string output;
-    output.append("#!/usr/bin/env python3\nstack = []\n");
-
-    for (auto token : program) {
-        switch (token.type) {
-            case PUSH: {
-                output.append("stack.append(" + token.text + ")\n");
-            } break;
-            case DUP: {
-                output.append("stack.append(stack[len(stack) - 1])\n");
-            } break;
-            case DROP: {
-                output.append("stack.pop()");
-            } break;
-            case SWAP: {
-                // WARNING: Weird code ahead!
-                output.append("stack.append(stack.pop(0))\n");
-                output.append("stack.append(stack.pop(1))\n");
-            } break;
-            case PLUS: {
-                output.append("stack.append(stack.pop() + stack.pop())\n");
-            } break;
-            case MINUS: {
-                output.append("stack.append(stack.pop(0) - stack.pop())\n");
-            } break;
-            case MULT: {
-                output.append("stack.append(stack.pop() * stack.pop())\n");
-            } break;
-            case DIV: {
-                output.append("stack.append(stack.pop(0) / stack.pop())\n");
-            } break;
-            case DUMP: {
-                output.append("print(stack.pop())\n");
-            } break;
-            case BIND: {
-                std::cerr << "ERROR: Binds is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case SAVE: {
-                std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case LOAD: {
-                std::cerr << "ERROR: Binds(and Loads) is not implemented in python3 mode!\n";
-                std::exit(1);
-            } break;
-            case TERNARY: {
-                std::cerr << "ERROR: Ternary operator is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case MAKEPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case ENDPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case INVOKEPROC: {
-                std::cerr << "ERROR: Procedures is not implemented in python3 mode!\n";
-                std::exit(1);
-            }
-            case UNDEFINED: {
-                std::cerr << "ERROR: UNREACHABLE\n";
-                std::exit(1);
-            } break;
-        }
-    }
-
-    std::cout << output;
 }
 
 void Lexer::run()
@@ -419,9 +506,9 @@ void Lexer::run()
 #   endif
     if (this->target == EXSI) {
         this->intrepret();
-    } else if (this->target == PYTHON3) {
-        std::cerr << "WARNING: Python3 mode is not fininised yet! It's not recomended to use this mode right now!\n";
-        this->compileToPython3();
+    } else {
+        std::cerr << "Only EXSI target is supported right now!\n";
+        std::exit(1);
     }
 }
 

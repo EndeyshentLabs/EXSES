@@ -18,6 +18,15 @@ syntax match xesOperators '\^'
 syntax match xesOperators '\''
 syntax match xesOperators '\"'
 syntax match xesOperators ':'
+syntax match xesOperators '='
+syntax match xesOperators '<>'
+syntax match xesOperators '<'
+syntax match xesOperators '<='
+syntax match xesOperators '>'
+syntax match xesOperators '>='
+syntax match xesOperators '||'
+syntax match xesOperators '&&'
+syntax match xesOperators '!!'
 
 syntax match xesNumber "\v<\d+>"
 syntax match xesNumber "\v-<\d+>"
@@ -25,7 +34,8 @@ syntax match xesNumber "\v-<\d+>"
 syntax keyword xesBooleans true false
 
 syntax match xesConditional '\.?'
-syntax match xesConditional '\.?'
+syntax match xesConditional '('
+syntax match xesConditional ')'
 
 highlight default link xesTodo           Todo
 highlight default link xesNumber         Number
