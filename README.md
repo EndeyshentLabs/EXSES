@@ -11,7 +11,7 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 
 ### Basic
 
-```bash
+```python
 20 10 + ! # Will output the '30'
 # Raise 5 to the power of 2
 5 & # `&` will duplicate top value e.g '5'
