@@ -119,12 +119,12 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case DROP: {
                 if (stack.size() < 1)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
                 stack.pop_back();
             } break;
             case SWAP: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -134,7 +134,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case PLUS: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -143,7 +143,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case MINUS: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -152,7 +152,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case MULT: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -161,7 +161,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case DIV: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 int b = stack.back();
@@ -170,31 +170,31 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case DUMP: {
                 if (stack.size() < 1)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
                 int a = stack.back();
                 stack.pop_back();
                 std::cout << a << '\n';
             } break;
             case BIND: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int value = stack.back();
                 stack.pop_back();
                 int name = stack.back();
                 stack.pop_back();
                 if (storage.contains(name))
-                    makeError(token, "There is a bind with the same name!");
+                    makeError(token, "There is a bind with the name `" + std::to_string(name) + "`!");
                 storage[name] = value;
             } break;
             case SAVE: {
                 if (stack.size() < 2)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                 int value = stack.back();
                 stack.pop_back();
                 int name = stack.back();
                 stack.pop_back();
                 if (!storage.contains(name))
-                    makeError(token, "There is no bind with that name!");
+                    makeError(token, "There is no bind with the name `" + std::to_string(name) + "`!");
                 storage[name] = value;
             } break;
             case LOAD: {
@@ -206,7 +206,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case TERNARY: {
                 if (stack.size() < 3)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected 3, got " + std::to_string(stack.size()) + ".");
                 int cond = stack.back();
                 stack.pop_back();
                 int alt = stack.back();
@@ -222,11 +222,11 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case MAKEPROC: {
                 if (stack.size() < 1)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
                 int name = stack.back();
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
-                        makeError(token, "There is the procedure with the same name!");
+                        makeError(token, "There is the procedure with the name `" + std::to_string(proc.name) + "`!");
                     }
                 }
                 stack.pop_back();
@@ -255,7 +255,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
             } break;
             case INVOKEPROC: {
                 if (stack.size() < 1)
-                    makeError(token, "Not enough elements on the stack!");
+                    makeError(token, "Not enough elements on the stack! Expected name of the procedure to invoke.");
                 int name = stack.back();
                 stack.pop_back();
                 bool found = false;
