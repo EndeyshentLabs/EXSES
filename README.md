@@ -1,3 +1,5 @@
+[![CMake](https://github.com/EndeyshentLabs/EXSES/actions/workflows/cmake.yml/badge.svg)](https://github.com/EndeyshentLabs/EXSES/actions/workflows/cmake.yml)
+
 # EXSES
 
 **WARNING: THIS PROGRAMMING LANGUAGE IS UNFINISHED! EVERYTHING MAY CHANGE IN THE FUTURE!** 
