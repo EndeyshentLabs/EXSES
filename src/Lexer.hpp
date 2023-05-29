@@ -16,7 +16,7 @@ enum Target {
 class Lexer
 {
 public:
-    Lexer(std::string fileName, std::string source, Target target);
+    Lexer(std::string fileName, Target target);
     Target target;
     void tokenize();
     void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});

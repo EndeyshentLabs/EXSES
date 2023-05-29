@@ -1,6 +1,7 @@
 #include <Lexer.hpp>
 
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -15,8 +16,22 @@
         std::cout << fileName + ":" + std::to_string((tokenLike).line + 1) + ":" + std::to_string((tokenLike).col + 1) << ": NOTE: " << text << '\n'; \
     } while (0)
 
-Lexer::Lexer(std::string fileName, std::string source, Target target) : target(target), source(source), fileName(fileName)
+Lexer::Lexer(std::string fileName, Target target) : target(target), fileName(fileName)
 {
+    std::ifstream sourceFile;
+    sourceFile.open(this->fileName, std::ios::in);
+    if (sourceFile.is_open()) {
+        std::string line;
+
+        while (std::getline(sourceFile, line)) {
+            source.append(line + '\n');
+        }
+        sourceFile.close();
+    } else {
+        std::cerr << "ERROR: Couldn't open a file '" << this->fileName << "'!\n";
+    }
+
+    this->run();
 }
 
 int stripByCol(std::string line, unsigned int col)
