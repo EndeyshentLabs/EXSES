@@ -133,10 +133,10 @@ void Lexer::tokenize()
         } else if (token.text == "!!") {
             token.type = LNOT;
         } else if (token.text == "true") {
-            token.type = PUSH;
+            token.type = TRUE;
             token.text = "1";
         } else if (token.text == "false") {
-            token.type = PUSH;
+            token.type = FALSE;
             token.text = "0";
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
@@ -482,6 +482,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 int a = stack.back();
                 stack.pop_back();
                 stack.push_back(!a);
+            } break;
+            case TRUE: {
+                stack.push_back(1);
+            } break;
+            case FALSE: {
+                stack.push_back(0);
             } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";

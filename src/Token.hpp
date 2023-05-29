@@ -32,7 +32,9 @@ enum TokenType
     GREATEREQUAL,
     LOR, // Logical OR (aka ||)
     LAND, // Logical AND (aka &&)
-    LNOT // Logical NOT (aka !)
+    LNOT, // Logical NOT (aka !)
+    TRUE,
+    FALSE
 };
 
 extern std::string TokenTypeString[];

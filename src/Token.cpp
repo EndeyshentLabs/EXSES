@@ -27,5 +27,7 @@ std::string TokenTypeString[] = {
     "GREATEREQUAL",
     "LOR",
     "LAND",
-    "LNOT"
+    "LNOT",
+    "TRUE",
+    "FALSE"
 };
