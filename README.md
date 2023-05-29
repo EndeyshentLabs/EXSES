@@ -63,8 +63,8 @@ Dependencies:
 - Any C++ compiler with C++20 (I use GCC 12.2)
 
 ```console
-$ cmake -G Ninja -B build
-$ cmake --build build
+$ cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+$ cmake --build build --config Release
 $ vim test.xes
 ... WRITING ...
 $ ./build/exsi test.xes
