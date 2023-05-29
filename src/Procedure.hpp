@@ -5,10 +5,10 @@
 
 #include <Token.hpp>
 
-class XesProcedure
+class Procedure
 {
 public:
-    XesProcedure(int line, int col, int name, std::vector<Token> body); // : line(line), col(col), name(name), body(body) {}
+    Procedure(int line, int col, int name, std::vector<Token> body); // : line(line), col(col), name(name), body(body) {}
     int line;
     int col;
     int name;

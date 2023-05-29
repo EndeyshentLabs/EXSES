@@ -28,7 +28,7 @@ private:
     std::vector<Token> program;
     std::vector<int> stack;
     std::map<int, int> storage;
-    std::vector<XesProcedure> procedureStorage;
+    std::vector<Procedure> procedureStorage;
     void makeError(Token token, std::string text);
     std::string tokenLocation(Token token);
 };

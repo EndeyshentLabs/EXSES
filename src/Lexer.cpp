@@ -224,7 +224,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 if (stack.size() < 1)
                     makeError(token, "Not enough elements on the stack!");
                 int name = stack.back();
-                for (XesProcedure proc : procedureStorage) {
+                for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
                         makeError(token, "There is the procedure with the same name!");
                     }
@@ -245,7 +245,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 if (!hasEnd) {
                     makeError(token, "Unclosed procedure '" + std::to_string(name) + "'");
                 }
-                XesProcedure proc(token.line, token.col, name, body);
+                Procedure proc(token.line, token.col, name, body);
                 procedureStorage.push_back(proc);
             } break;
             case ENDPROC: {
@@ -259,7 +259,7 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 int name = stack.back();
                 stack.pop_back();
                 bool found = false;
-                for (XesProcedure proc : procedureStorage) {
+                for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
                         intrepret(true, proc.getBody());
                         found = true;
@@ -269,10 +269,9 @@ void Lexer::intrepret(bool insideOfProc, std::vector<Token> procBody)
                 if (!found) {
                     makeError(token, "No such procedure '" + std::to_string(name) + "'");
                 }
-                // makeError(token, "Procedures is not implemented yet!");
             } break;
             case UNDEFINED: {
-                std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
+                std::cerr << "ERROR: UNREACHABLE\n";
                 std::exit(1);
             } break;
         }
@@ -344,7 +343,7 @@ void Lexer::compileToPython3()
                 std::exit(1);
             }
             case UNDEFINED: {
-                std::cerr << "ERROR: UNREACHABLE IS REACHED!!!1!\n";
+                std::cerr << "ERROR: UNREACHABLE\n";
                 std::exit(1);
             } break;
         }
