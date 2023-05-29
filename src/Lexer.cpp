@@ -134,10 +134,8 @@ void Lexer::tokenize()
             token.type = LNOT;
         } else if (token.text == "true") {
             token.type = TRUE;
-            token.text = "1";
         } else if (token.text == "false") {
             token.type = FALSE;
-            token.text = "0";
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
             std::exit(1);
