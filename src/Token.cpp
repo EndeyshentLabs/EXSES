@@ -24,5 +24,8 @@ std::string TokenTypeString[] = {
     "LESS",
     "LESSEQUAL",
     "GREATER",
-    "GREATEREQUAL"
+    "GREATEREQUAL",
+    "LOR",
+    "LAND",
+    "LNOT"
 };

@@ -126,6 +126,12 @@ void Lexer::tokenize()
             token.type = GREATER;
         } else if (token.text == ">=") {
             token.type = GREATEREQUAL;
+        } else if (token.text == "||") {
+            token.type = LOR;
+        } else if (token.text == "&&") {
+            token.type = LAND;
+        } else if (token.text == "!!") {
+            token.type = LNOT;
         } else if (token.text == "true") {
             token.type = PUSH;
             token.text = "1";
@@ -445,6 +451,37 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 int b = stack.back();
                 stack.pop_back();
                 stack.push_back(b >= a);
+            } break;
+            case LOR: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b || a);
+            } break;
+            case LAND: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+                stack.pop_back();
+                stack.push_back(b && a);
+            } break;
+            case LNOT: {
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+                int a = stack.back();
+                stack.pop_back();
+                stack.push_back(!a);
             } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";
