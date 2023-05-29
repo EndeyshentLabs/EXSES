@@ -19,9 +19,19 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 ! # Output
 ```
 
+### Control flow
+
+```python
+500 80 > ( # if 500 is less than 80 do block. NOTE: `(` is if keyword in EXSES
+    99 !
+) # close the block
+```
+
 ### More advanced
 
-```bash
+#### Bindings
+
+```python
 # bind 500 to '1100'
 1100 500 <-
 # bind 80 to '1101'
@@ -33,6 +43,16 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 1101 ^
 - # subtract
 ! # print (420)
+```
+
+#### Procedures
+
+```python
+1100 ' # int  # create a procedure named "1100"
+    80 - ! # body of the procedure. subtract 80 from the value that was on top of the stack when procedure was invoked and print the result
+" # close the procedure
+
+500 1100 : # `:` call a procedure
 ```
 
 ## Build-it
