@@ -32,4 +32,7 @@ private:
     std::string tokenLocation(Token token);
 };
 
+template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
+void printTokenLineInfo(T token);
+
 #endif /* EXSES_LEXER_H */

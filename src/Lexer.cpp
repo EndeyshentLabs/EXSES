@@ -13,8 +13,10 @@
 
 #define makeNote(tokenLike, text) \
     do { \
-        std::cout << fileName + ":" + std::to_string((tokenLike).line + 1) + ":" + std::to_string((tokenLike).col + 1) << ": NOTE: " << text << '\n'; \
+        std::cout << fileName + ":" + std::to_string((tokenLike).line + 1) + ":" + std::to_string((tokenLike).col + 1) << ": \033[32mNOTE\033[0m: " << text << '\n'; \
     } while (0)
+
+std::vector<std::string> lines;
 
 Lexer::Lexer(std::string fileName, Target target) : target(target), fileName(fileName)
 {
@@ -52,7 +54,7 @@ int chopWord(std::string line, unsigned int col)
 
 void Lexer::tokenize()
 {
-    std::vector<std::string> lines = split(source, "\\n");
+    lines = split(source, "\\n");
     unsigned int lineCount = 0;
 
     for (std::string line : lines) {
@@ -316,7 +318,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
                         makeError(token, "There is the procedure with the name `" + std::to_string(proc.name) + "`!");
+                        printTokenLineInfo(token);
+
                         makeNote(proc, "Defined here.");
+                        printTokenLineInfo(proc);
                         std::exit(1);
                     }
                 }
@@ -530,10 +535,24 @@ void Lexer::run()
 
 void Lexer::makeError(Token token, std::string text)
 {
-    std::cerr << tokenLocation(token) << ": ERROR: " << text << '\n';
+    std::cerr << tokenLocation(token) << ": \033[31mERROR\033[0m: " << text << '\n';
 }
 
 std::string Lexer::tokenLocation(Token token)
 {
     return fileName + ":" + std::to_string(token.line + 1) + ":" + std::to_string(token.col + 1);
+}
+
+template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
+void printTokenLineInfo(T token)
+{
+    std::printf("%d | %s\n", token.line+1, lines[token.line].c_str());
+    for (unsigned int i = 0; i < std::to_string(token.col).length(); i++) {
+        std::cout << " ";
+    }
+    std::cout << " | \033[31m";
+    for (unsigned int i = 0; i < token.col; i++) {
+        std::cout << " ";
+    }
+    std::cout << "^\033[0m\n";
 }
