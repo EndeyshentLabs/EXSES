@@ -190,15 +190,14 @@ Error Xesvm::executeInstruction() {
 int main()
 {
     Xesvm vm;
-    vm.program = {
-        Instruction { .type = InstructionType::PUSH, .operand = 34},
-        Instruction { .type = InstructionType::PLUS },
-        Instruction { .type = InstructionType::PUSH, .operand = 35},
-        Instruction { .type = InstructionType::PLUS },
-        Instruction { .type = InstructionType::JMP, .operand = 1 },
+    vm.program = {                                                   // addr
+        Instruction { .type = InstructionType::PUSH, .operand = 34}, // 0
+        Instruction { .type = InstructionType::PUSH, .operand = 35}, // 1
+        Instruction { .type = InstructionType::PLUS },               // 2
+        Instruction { .type = InstructionType::JMP, .operand = 1 },  // 3
     };
 
-    for (unsigned int i=0; i < EXECUTION_LIMIT && !vm.halt; i++) {
+    for (unsigned int i = 0; i < EXECUTION_LIMIT && !vm.halt; i++) {
         Error error = vm.executeInstruction();
 
         std::cout << "STACK:\n";
