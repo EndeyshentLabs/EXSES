@@ -3,6 +3,7 @@
 std::string TokenTypeString[] = {
     "PUSH",
     "DUP",
+    "OVER",
     "DROP",
     "SWAP",
     "PLUS",

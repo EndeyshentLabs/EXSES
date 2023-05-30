@@ -1,0 +1,12 @@
+99 ' # create function '99'
+    $& # copy element over the top
+    $& # copy element over the top
+    + # sum top 2
+    & # duplicate value on top of the stack
+    ! # print it
+    99 : # recursion
+" # end function '99'
+
+0 1 # initial stack state
+
+99 : # call the function

@@ -90,6 +90,8 @@ void Lexer::tokenize()
             token.type = DIV;
         } else if (token.text == "&")  {
             token.type = DUP;
+        } else if (token.text == "$&")  {
+            token.type = OVER;
         } else if (token.text == "_")  {
             token.type = DROP;
         } else if (token.text == "$")  {
@@ -157,6 +159,20 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             } break;
             case DUP: {
                 stack.push_back(stack.back());
+            } break;
+            case OVER: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack!");
+                    std::exit(1);
+                }
+
+                int a = stack.back();
+                stack.pop_back();
+                int b = stack.back();
+
+                stack.push_back(b);
+                stack.push_back(a);
+                stack.push_back(b);
             } break;
             case DROP: {
                 if (stack.size() < 1) {
