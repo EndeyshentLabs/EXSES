@@ -1,5 +1,8 @@
+#include <bitset>
+#include <cassert>
 #include <cstdint>
 #include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <vector>
 
@@ -9,7 +12,7 @@
 // TODO: Assembly language for XESVM (xesasm?)
 // TODO: XESVM bytecode
 
-#define EXECUTION_LIMIT 8192 // TODO: tweak this value or remove
+#define EXECUTION_LIMIT 64 // TODO: tweak this value or remove
 
 using Word = std::int64_t;
 
@@ -103,8 +106,8 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Word a = this->stack.back(); this->stack.pop_back();
             Word b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
             this->stack.push_back(a - b);
 
             ++this->ip;
@@ -125,8 +128,8 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Word a = this->stack.back(); this->stack.pop_back();
             Word b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
 
             if (b == 0) {
                 return Error::DIVISION_BY_ZERO;
@@ -166,6 +169,7 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
             this->stack.push_back(this->stack[this->stack.size() - 1 - instruction.operand]);
+            ++this->ip;
         } break;
         case InstructionType::EQUALS: {
             if (this->stack.size() < 2) {
@@ -190,11 +194,13 @@ Error Xesvm::executeInstruction() {
 int main()
 {
     Xesvm vm;
-    vm.program = {                                                   // addr
-        Instruction { .type = InstructionType::PUSH, .operand = 34}, // 0
-        Instruction { .type = InstructionType::PUSH, .operand = 35}, // 1
-        Instruction { .type = InstructionType::PLUS },               // 2
-        Instruction { .type = InstructionType::JMP, .operand = 1 },  // 3
+    vm.program = {                                                  // addr
+        Instruction { .type = InstructionType::PUSH, .operand = 0}, // 0
+        Instruction { .type = InstructionType::PUSH, .operand = 1}, // 1
+        Instruction { .type = InstructionType::DUP, .operand = 1 }, // 2
+        Instruction { .type = InstructionType::DUP, .operand = 1 }, // 3
+        Instruction { .type = InstructionType::PLUS },              // 4
+        Instruction { .type = InstructionType::JMP, .operand = 2 }  // 5
     };
 
     for (unsigned int i = 0; i < EXECUTION_LIMIT && !vm.halt; i++) {
