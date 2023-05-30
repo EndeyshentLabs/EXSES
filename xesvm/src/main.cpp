@@ -11,7 +11,7 @@
 
 #define EXECUTION_LIMIT 8192 // TODO: tweak this value or remove
 
-using Term = std::int64_t;
+using Word = std::int64_t;
 
 enum class Error {
     OK = 0,
@@ -58,14 +58,14 @@ enum class InstructionType {
 
 struct Instruction {
     InstructionType type;
-    Term operand;
+    Word operand;
 };
 
 class Xesvm {
 public:
-    std::vector<Term> stack;
+    std::vector<Word> stack;
     std::vector<Instruction> program;
-    Term ip = 0;
+    Word ip = 0;
     bool halt = false;
 
     Error executeInstruction();
@@ -84,6 +84,7 @@ Error Xesvm::executeInstruction() {
         } break;
         case InstructionType::PUSH: {
             this->stack.push_back(instruction.operand);
+
             ++this->ip;
         } break;
         case InstructionType::PLUS: {
@@ -91,9 +92,10 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Term a = this->stack.back(); this->stack.pop_back();
-            Term b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
+            Word b = this->stack.back(); this->stack.pop_back();
             this->stack.push_back(a + b);
+
             ++this->ip;
         } break;
         case InstructionType::MINUS: {
@@ -101,9 +103,10 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Term a = this->stack.back(); this->stack.pop_back();
-            Term b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
+            Word b = this->stack.back(); this->stack.pop_back();
             this->stack.push_back(a - b);
+
             ++this->ip;
         } break;
         case InstructionType::MULT: {
@@ -111,9 +114,10 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Term a = this->stack.back(); this->stack.pop_back();
-            Term b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
+            Word b = this->stack.back(); this->stack.pop_back();
             this->stack.push_back(a * b);
+
             ++this->ip;
         } break;
         case InstructionType::DIV: {
@@ -121,12 +125,15 @@ Error Xesvm::executeInstruction() {
                 return Error::STACK_UNDERFLOW;
             }
 
-            Term a = this->stack.back(); this->stack.pop_back();
-            Term b = this->stack.back(); this->stack.pop_back();
+            Word a = this->stack.back(); this->stack.pop_back();
+            Word b = this->stack.back(); this->stack.pop_back();
+
             if (b == 0) {
                 return Error::DIVISION_BY_ZERO;
             }
+
             this->stack.push_back(a / b);
+
             ++this->ip;
         } break;
         case InstructionType::JMP: {
@@ -136,10 +143,40 @@ Error Xesvm::executeInstruction() {
             if (this->stack.size() < 1) {
                 return Error::STACK_UNDERFLOW;
             }
-            Term a = this->stack.back(); this->stack.pop_back();
+
+            Word a = this->stack.back(); this->stack.pop_back();
+
             if (a != 0) {
                 this->ip = instruction.operand;
+            } else {
+                ++this->ip;
             }
+        } break;
+        case InstructionType::PRINT: {
+            if (this->stack.size() < 1) {
+                return Error::STACK_UNDERFLOW;
+            }
+
+            Word a = this->stack.back(); this->stack.pop_back();
+
+            std::cout << a << '\n';
+        } break;
+        case InstructionType::DUP: {
+            if (this->stack.size() < 1) {
+                return Error::STACK_UNDERFLOW;
+            }
+            this->stack.push_back(this->stack[this->stack.size() - 1 - instruction.operand]);
+        } break;
+        case InstructionType::EQUALS: {
+            if (this->stack.size() < 2) {
+                return Error::STACK_UNDERFLOW;
+            }
+
+            Word a = this->stack.back(); this->stack.pop_back();
+            Word b = this->stack.back(); this->stack.pop_back();
+            this->stack.push_back(a == b);
+
+            ++this->ip;
         } break;
         case InstructionType::HALT: {
             this->halt = true;
@@ -165,7 +202,7 @@ int main()
         Error error = vm.executeInstruction();
 
         std::cout << "STACK:\n";
-        for (Term j : vm.stack) {
+        for (Word j : vm.stack) {
             std::cout << "\t" << j << '\n';
         }
 
