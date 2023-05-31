@@ -1,7 +1,8 @@
 #ifndef XESVM_INSTRUCTION_H
 #define XESVM_INSTRUCTION_H
 
-#include "Word.hpp"
+#include <Word.hpp>
+
 enum class InstructionType {
     NOP = 0,
     PUSH,

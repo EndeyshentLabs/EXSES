@@ -3,10 +3,9 @@
 
 #define EXECUTION_LIMIT 64 // TODO: tweak this value or remove
 
-#include "Instruction.hpp"
-#include "Error.hpp"
-#define XESVM_IMPLEMENTATION
-#include "Xesvm.hpp"
+#include <Instruction.hpp>
+#include <Error.hpp>
+#include <Xesvm.hpp>
 
 // !NOTE! This is just a concept !NOTE! //
 

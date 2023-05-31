@@ -13,6 +13,7 @@ project(xesvm CXX)
 add_executable(
     xesasm
     src/main.cpp
+    src/Xesvm.cpp
 )
 target_include_directories(xesasm PUBLIC src)
 target_compile_options(xesasm PRIVATE -Wall -Wextra -pedantic -Wswitch-enum -fdiagnostics-color)
