@@ -30,5 +30,8 @@ std::string TokenTypeString[] = {
     "LAND",
     "LNOT",
     "TRUE",
-    "FALSE"
+    "FALSE",
+    "STDLIB_MATH_SQRT",
+    "STDLIB_MATH_COS",
+    "STDLIB_MATH_SIN"
 };

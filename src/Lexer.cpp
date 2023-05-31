@@ -1,5 +1,6 @@
 #include <Lexer.hpp>
 
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -140,6 +141,16 @@ void Lexer::tokenize()
             token.type = TRUE;
         } else if (token.text == "false") {
             token.type = FALSE;
+        // START STDLIB
+        // MATH
+        } else if (token.text == "Math(sqrt)") {
+            token.type = STDLIB_MATH_SQRT;
+        } else if (token.text == "Math(cos)") {
+            token.type = STDLIB_MATH_COS;
+        } else if (token.text == "Math(sin)") {
+            token.type = STDLIB_MATH_SIN;
+        // END MATH
+        // END   STDLIB
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
             std::exit(1);
@@ -536,6 +547,46 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case FALSE: {
                 stack.push_back(0);
             } break;
+            // START STDLIB
+            // MATH
+            case STDLIB_MATH_SQRT: {
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+                makeNote(token, "Warning: result of sqrt operation will be an integer!");
+                int a = stack.back();
+                stack.pop_back();
+
+                stack.push_back(std::sqrt(a));
+            } break;
+            case STDLIB_MATH_COS: {
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+                makeNote(token, "Warning: result of cos operation will be an integer!");
+                int a = stack.back();
+                stack.pop_back();
+
+                stack.push_back(std::cos(a));
+            } break;
+            case STDLIB_MATH_SIN: {
+                if (stack.size() < 1) {
+                    makeError(token, "Not enough elements on the stack!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+                makeNote(token, "Warning: result of sin operation will be an integer!");
+                int a = stack.back();
+                stack.pop_back();
+
+                stack.push_back(std::sin(a));
+            } break;
+            // END MATH
+            // END   STDLIB
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";
                 std::exit(1);
