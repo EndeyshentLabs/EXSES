@@ -11,6 +11,7 @@ public:
     std::vector<Instruction> program;
     Word ip = 0;
     bool halt = false;
+    std::vector<Word> callReturnStack;
 
     Error executeInstruction();
 };

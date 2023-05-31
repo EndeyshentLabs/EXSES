@@ -16,4 +16,4 @@ add_executable(
     src/Xesvm.cpp
 )
 target_include_directories(xesasm PUBLIC src)
-target_compile_options(xesasm PRIVATE -Wall -Wextra -pedantic -Wswitch-enum -fdiagnostics-color)
+target_compile_options(xesasm PRIVATE -Wall -Wextra -pedantic -Werror=switch -Werror=switch-enum -fdiagnostics-color)

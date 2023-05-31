@@ -14,20 +14,32 @@
 
 int main()
 {
-    gVm.program = {                                                  // addr
-        Instruction { .type = InstructionType::PUSH, .operand = 0}, // 0
-        Instruction { .type = InstructionType::PUSH, .operand = 1}, // 1
-        Instruction { .type = InstructionType::DUP, .operand = 1 }, // 2
-        Instruction { .type = InstructionType::DUP, .operand = 1 }, // 3
-        Instruction { .type = InstructionType::PLUS },              // 4
-        Instruction { .type = InstructionType::JMP, .operand = 2 }  // 5
+    // gVm.program = {                                                  // addr
+    //     Instruction { .type = InstructionType::PUSH, .operand = 0 }, // 0
+    //     Instruction { .type = InstructionType::PUSH, .operand = 1 }, // 1
+    //     Instruction { .type = InstructionType::DUP, .operand = 1 },  // 2
+    //     Instruction { .type = InstructionType::DUP, .operand = 1 },  // 3
+    //     Instruction { .type = InstructionType::PLUS },               // 4
+    //     Instruction { .type = InstructionType::JMP, .operand = 2 }   // 5
+    // };
+
+    gVm.program = {
+        Instruction{ .type = InstructionType::PUSH, .operand = 99 }, // 0
+        Instruction{ .type = InstructionType::PUSH, .operand = 86 }, // 1
+        Instruction{ .type = InstructionType::JMP, .operand = 5 }, // 2
+        Instruction{ .type = InstructionType::PRINT }, // 3
+        Instruction{ .type = InstructionType::HALT }, // 4
+        Instruction{ .type = InstructionType::PLUS }, // 5
+        Instruction{ .type = InstructionType::RET } // 6
     };
 
     for (unsigned int i = 0; i < EXECUTION_LIMIT && !gVm.halt; i++) {
         Error error = gVm.executeInstruction();
 
         std::cout << "STACK:\n";
-        for (Word j : gVm.stack) {
+        if (gVm.stack.size() == 0) {
+            std::cout << "\tempty\n";
+        } else for (Word j : gVm.stack) {
             std::cout << "\t" << j << '\n';
         }
 
@@ -37,7 +49,7 @@ int main()
         }
     }
 
-    std::cout << "Execution ended\n";
+    std::cout << "\nExecution ended\n";
 
     return 0;
 }

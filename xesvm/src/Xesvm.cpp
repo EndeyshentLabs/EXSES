@@ -1,3 +1,4 @@
+#include "Instruction.hpp"
 #include <Xesvm.hpp>
 #include <iostream>
 
@@ -69,6 +70,7 @@ Error Xesvm::executeInstruction() {
             ++this->ip;
         } break;
         case InstructionType::JMP: {
+            this->callReturnStack.push_back(this->ip);
             this->ip = instruction.operand;
         } break;
         case InstructionType::JNZ: {
@@ -80,6 +82,7 @@ Error Xesvm::executeInstruction() {
 
             if (a != 0) {
                 this->ip = instruction.operand;
+                this->callReturnStack.push_back(this->ip);
             } else {
                 ++this->ip;
             }
@@ -91,7 +94,8 @@ Error Xesvm::executeInstruction() {
 
             Word a = this->stack.back(); this->stack.pop_back();
 
-            std::cout << a << '\n';
+            std::cout << std::to_string(a) << '\n';
+            ++this->ip;
         } break;
         case InstructionType::DUP: {
             if (this->stack.size() < 1) {
@@ -113,6 +117,14 @@ Error Xesvm::executeInstruction() {
         } break;
         case InstructionType::HALT: {
             this->halt = true;
+            std::cout << "Machine halted\n";
+        } break;
+        case InstructionType::RET: {
+            if (this->callReturnStack.back() + 1 > this->program.size()) {
+                return Error::ILLEGAL_ACCESS;
+            }
+            this->ip = this->callReturnStack.back() + 1;
+            this->callReturnStack.pop_back();
         } break;
         default: { return Error::ILLEGAL_INSTRUCTION; } break;
     }
