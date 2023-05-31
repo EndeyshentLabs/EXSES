@@ -9,8 +9,8 @@ class Procedure
 {
 public:
     Procedure(int line, int col, int name, std::vector<Token> body); // : line(line), col(col), name(name), body(body) {}
-    int line;
-    int col;
+    unsigned int line;
+    unsigned int col;
     int name;
     std::vector<Token> getBody() { return body; }
 private:

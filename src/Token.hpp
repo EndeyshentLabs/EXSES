@@ -8,6 +8,7 @@ enum TokenType
     UNDEFINED = -1,
     PUSH = 0,
     DUP,
+    OVER,
     DROP,
     SWAP,
     PLUS,
