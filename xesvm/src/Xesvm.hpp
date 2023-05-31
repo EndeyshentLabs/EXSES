@@ -14,9 +14,14 @@ public:
 
     Error executeInstruction();
 };
+
+extern Xesvm gVm;
+
 #endif // XESVM_XESVM_H
 
 #ifdef XESVM_IMPLEMENTATION
+Xesvm vm;
+
 Error Xesvm::executeInstruction() {
     if (this->ip < 0 || this->ip >= this->program.size()) {
         return Error::ILLEGAL_ACCESS;

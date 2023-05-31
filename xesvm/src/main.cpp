@@ -15,8 +15,7 @@
 
 int main()
 {
-    Xesvm vm;
-    vm.program = {                                                  // addr
+    gVm.program = {                                                  // addr
         Instruction { .type = InstructionType::PUSH, .operand = 0}, // 0
         Instruction { .type = InstructionType::PUSH, .operand = 1}, // 1
         Instruction { .type = InstructionType::DUP, .operand = 1 }, // 2
@@ -25,11 +24,11 @@ int main()
         Instruction { .type = InstructionType::JMP, .operand = 2 }  // 5
     };
 
-    for (unsigned int i = 0; i < EXECUTION_LIMIT && !vm.halt; i++) {
-        Error error = vm.executeInstruction();
+    for (unsigned int i = 0; i < EXECUTION_LIMIT && !gVm.halt; i++) {
+        Error error = gVm.executeInstruction();
 
         std::cout << "STACK:\n";
-        for (Word j : vm.stack) {
+        for (Word j : gVm.stack) {
             std::cout << "\t" << j << '\n';
         }
 
