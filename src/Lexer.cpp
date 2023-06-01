@@ -76,6 +76,7 @@ void Lexer::tokenize()
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
+                    printTokenLineInfo(token);
                     makeNote(token, "String cannot contain spaces!");
                     std::exit(1);
                 }
@@ -91,6 +92,7 @@ void Lexer::tokenize()
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
+                    printTokenLineInfo(token);
                     makeNote(token, "String cannot contain spaces!");
                     std::exit(1);
                 }
@@ -727,7 +729,7 @@ template<typename T> // This trick is needed for compatibility with both Token a
 void printTokenLineInfo(T token)
 {
     std::printf("%d | %s\n", token.line+1, lines[token.line].c_str());
-    for (unsigned int i = 0; i < std::to_string(token.col).length(); i++) {
+    for (unsigned int i = 0; i < std::to_string(token.line).length(); i++) {
         std::cout << " ";
     }
     std::cout << " | \033[31m";
