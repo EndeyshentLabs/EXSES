@@ -23,10 +23,10 @@
 | ENDIF | `)` | `--` | Ends IF code block |
 | EQUAL | `=` | `a b -- a==b` | Equality comparison |
 | NOTEQUAL | `<>` | `a b -- a!=b` | Not-quality comparison |
-| LESS | `<` | `` | Less comparison |
+| LESS | `<` | `a b -- a<b` | Less comparison |
 | LESSEQUAL | `<=` | `a b -- a<=b` | Less-or-equal comparison |
-| GREATER | `>` | `a b -- a > b` | Greater comparison |
-| GREATEREQUAL | `` | `a b -- a >= b` | Greater-or-equal comparison |
+| GREATER | `>` | `a b -- a>b` | Greater comparison |
+| GREATEREQUAL | `>=` | `a b -- a>=b` | Greater-or-equal comparison |
 | LOR | `\|\|` | `a b -- a\|\|b` | Logical OR |
 | LAND | `&&` | `a b -- a&&b` | Logical AND |
 | LNOT | `!!` | `a -- !a` | Logical NOT |
