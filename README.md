@@ -7,6 +7,8 @@
 <img src="./assets/logo1.png" alt="EXSES logp" width="128" />
 EXSES - smol stack-oriented concatenative programming language. Development have just started: do not expect something revolutionary new.
 
+## [Language Reference](./REFERENCE.md) 
+
 ## Example
 
 ### Hello, World!
