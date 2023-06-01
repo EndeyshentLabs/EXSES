@@ -8,6 +8,7 @@ enum TokenType
     UNDEFINED = -1,
     PUSH = 0,
     STRING,
+    STRING_PLUS,
     DUP,
     OVER,
     DROP,

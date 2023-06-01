@@ -83,6 +83,8 @@ void Lexer::tokenize()
     for (auto& token : program) {
         if (isInteger(token.text)) {
             token.type = PUSH;
+        } else if (token.text == "[+]")  {
+            token.type = STRING_PLUS;
         } else if (std::regex_match(token.text, std::regex("\\[.*\\]"))) {
             token.type = STRING;
             token.text = token.text.substr(1, token.text.length() - 2);
@@ -220,6 +222,20 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 stack.push_back(b);
             } break;
             case PLUS: {
+                if (stack.size() < 2) {
+                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                long a = std::stol(stack.back());
+                stack.pop_back();
+                long b = std::stol(stack.back());
+                stack.pop_back();
+
+                stack.push_back(std::to_string(a + b));
+            } break;
+            case STRING_PLUS: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
                     printTokenLineInfo(token);
