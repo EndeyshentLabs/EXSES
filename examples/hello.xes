@@ -1,0 +1,4 @@
+[Hello,] # string literal
+[World!] # no spaces, no escapes
+
+$ ! !
