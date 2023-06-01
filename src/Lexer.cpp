@@ -68,99 +68,42 @@ void Lexer::tokenize()
 
         while (col < line.length()) {
             colEnd = stripByCol(line, col);
-            if (line.substr(col, colEnd).find(" ") != std::string::npos) {
+            if (line.substr(col, colEnd).find(" ") != std::string::npos) { // TODO: make it better
                 auto list = split(line.substr(col, colEnd), "\\s");
-                this->program.push_back(Token{ lineCount, col, UNDEFINED, list.front() });
+                std::string text = list.front();
+
+                Token token(lineCount, col, makeType(text), text);
+
+                if (token.type == UNDEFINED) {
+                    makeError(token, "Unexpected token `" + token.text + "`");
+                    makeNote(token, "String cannot contain spaces!");
+                    std::exit(1);
+                }
+
+                if (token.type == STRING) 
+                    token.text = token.text.substr(1, text.length() - 2);
+
+                this->program.push_back(token);
             } else {
-                this->program.push_back(Token{ lineCount, col, UNDEFINED, line.substr(col, colEnd) });
+                std::string text = line.substr(col, colEnd);
+
+                Token token(lineCount, col, makeType(text), text);
+
+                if (token.type == UNDEFINED) {
+                    makeError(token, "Unexpected token `" + token.text + "`");
+                    makeNote(token, "String cannot contain spaces!");
+                    std::exit(1);
+                }
+
+                if (token.type == STRING) 
+                    token.text = token.text.substr(1, text.length() - 2);
+
+                this->program.push_back(token);
             }
             col = chopWord(line, colEnd);
         }
 
         lineCount++;
-    }
-
-    for (auto& token : program) {
-        if (isInteger(token.text)) {
-            token.type = PUSH;
-        } else if (token.text == "[+]")  {
-            token.type = STRING_PLUS;
-        } else if (std::regex_match(token.text, std::regex("\\[.*\\]"))) {
-            token.type = STRING;
-            token.text = token.text.substr(1, token.text.length() - 2);
-        } else if (token.text == "+")  {
-            token.type = PLUS;
-        } else if (token.text == "-")  {
-            token.type = MINUS;
-        } else if (token.text == "*")  {
-            token.type = MULT;
-        } else if (token.text == "/")  {
-            token.type = DIV;
-        } else if (token.text == "&")  {
-            token.type = DUP;
-        } else if (token.text == "$&")  {
-            token.type = OVER;
-        } else if (token.text == "_")  {
-            token.type = DROP;
-        } else if (token.text == "$")  {
-            token.type = SWAP;
-        } else if (token.text == "!")  {
-            token.type = DUMP;
-        } else if (token.text == "<-") {
-            token.type = BIND;
-        } else if (token.text == "<!") {
-            token.type = SAVE;
-        } else if (token.text == "^") {
-            token.type = LOAD;
-        } else if (token.text == ".?") {
-            token.type = TERNARY;
-        } else if (token.text == "'") {
-            token.type = MAKEPROC;
-        } else if (token.text == "\"") {
-            token.type = ENDPROC;
-        } else if (token.text == ":") {
-            token.type = INVOKEPROC;
-        } else if (token.text == "(") {
-            token.type = IF;
-        } else if (token.text == ")") {
-            token.type = ENDIF;
-        } else if (token.text == "=") {
-            token.type = EQUAL;
-        } else if (token.text == "<>") {
-            token.type = NOTEQUAL;
-        } else if (token.text == "<") {
-            token.type = LESS;
-        } else if (token.text == "<=") {
-            token.type = LESSEQUAL;
-        } else if (token.text == ">") {
-            token.type = GREATER;
-        } else if (token.text == ">=") {
-            token.type = GREATEREQUAL;
-        } else if (token.text == "||") {
-            token.type = LOR;
-        } else if (token.text == "&&") {
-            token.type = LAND;
-        } else if (token.text == "!!") {
-            token.type = LNOT;
-        } else if (token.text == "true") {
-            token.type = TRUE;
-        } else if (token.text == "false") {
-            token.type = FALSE;
-        // START STDLIB
-        // MATH
-        } else if (token.text == "Math(sqrt)") {
-            token.type = STDLIB_MATH_SQRT;
-        } else if (token.text == "Math(cos)") {
-            token.type = STDLIB_MATH_COS;
-        } else if (token.text == "Math(sin)") {
-            token.type = STDLIB_MATH_SIN;
-        // END MATH
-        // END   STDLIB
-        } else {
-            makeError(token, "Unexpected token `" + token.text + "`");
-            makeNote(token, "It is possible, that this unexpected token is string. If it is: do not use spaces in the strings!");
-            std::exit(1);
-        }
     }
 }
 
@@ -170,6 +113,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
         std::cerr << "ERROR: EndeyshentLabs did something wrong! OMEGALUL\n";
         std::exit(1);
     }
+
     for (Token token : (inside ? procBody : this->program)) {
         if (!token.enabled && !inside) { continue; }
         switch (token.type) {
@@ -627,7 +571,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 stack.push_back(std::to_string(0));
             } break;
             // START STDLIB
-            // MATH
             case STDLIB_MATH_SQRT: {
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack!");
@@ -667,8 +610,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 stack.push_back(std::to_string(std::sin(a)));
             } break;
-            // END MATH
-            // END   STDLIB
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";
                 std::exit(1);
@@ -692,6 +633,84 @@ void Lexer::run()
         std::cerr << "Only EXSI target is supported right now!\n";
         std::exit(1);
     }
+}
+
+TokenType Lexer::makeType(std::string text)
+{
+    if (isInteger(text)) {
+        return(PUSH);
+    } else if (text == "[+]")  {
+        return(STRING_PLUS);
+    } else if (std::regex_match(text, std::regex("\\[.*\\]"))) {
+        return(STRING);
+    } else if (text == "+")  {
+        return(PLUS);
+    } else if (text == "-")  {
+        return(MINUS);
+    } else if (text == "*")  {
+        return(MULT);
+    } else if (text == "/")  {
+        return(DIV);
+    } else if (text == "&")  {
+        return(DUP);
+    } else if (text == "$&")  {
+        return(OVER);
+    } else if (text == "_")  {
+        return(DROP);
+    } else if (text == "$")  {
+        return(SWAP);
+    } else if (text == "!")  {
+        return(DUMP);
+    } else if (text == "<-") {
+        return(BIND);
+    } else if (text == "<!") {
+        return(SAVE);
+    } else if (text == "^") {
+        return(LOAD);
+    } else if (text == ".?") {
+        return(TERNARY);
+    } else if (text == "'") {
+        return(MAKEPROC);
+    } else if (text == "\"") {
+        return(ENDPROC);
+    } else if (text == ":") {
+        return(INVOKEPROC);
+    } else if (text == "(") {
+        return(IF);
+    } else if (text == ")") {
+        return(ENDIF);
+    } else if (text == "=") {
+        return(EQUAL);
+    } else if (text == "<>") {
+        return(NOTEQUAL);
+    } else if (text == "<") {
+        return(LESS);
+    } else if (text == "<=") {
+        return(LESSEQUAL);
+    } else if (text == ">") {
+        return(GREATER);
+    } else if (text == ">=") {
+        return(GREATEREQUAL);
+    } else if (text == "||") {
+        return(LOR);
+    } else if (text == "&&") {
+        return(LAND);
+    } else if (text == "!!") {
+        return(LNOT);
+    } else if (text == "true") {
+        return(TRUE);
+    } else if (text == "false") {
+        return(FALSE);
+    // STDLIB
+    } else if (text == "Math(sqrt)") {
+        return(STDLIB_MATH_SQRT);
+    } else if (text == "Math(cos)") {
+        return(STDLIB_MATH_COS);
+    } else if (text == "Math(sin)") {
+        return(STDLIB_MATH_SIN);
+    }
+
+    return UNDEFINED;
 }
 
 void Lexer::makeError(Token token, std::string text)
