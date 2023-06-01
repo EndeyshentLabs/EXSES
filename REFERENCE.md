@@ -27,7 +27,7 @@
 | LESSEQUAL | `<=` | `a b -- a<=b` | Less-or-equal comparison |
 | GREATER | `>` | `a b -- a > b` | Greater comparison |
 | GREATEREQUAL | `` | `a b -- a >= b` | Greater-or-equal comparison |
-| LOR | `\|\|` | `a b -- a||b` | Logical OR |
+| LOR | `\|\|` | `a b -- a\|\|b` | Logical OR |
 | LAND | `&&` | `a b -- a&&b` | Logical AND |
 | LNOT | `!!` | `a -- !a` | Logical NOT |
 | TRUE | `true` | `1` | Logical TRUE |
