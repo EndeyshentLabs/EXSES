@@ -83,6 +83,9 @@ void Lexer::tokenize()
     for (auto& token : program) {
         if (isInteger(token.text)) {
             token.type = PUSH;
+        } else if (std::regex_match(token.text, std::regex("\\[.*\\]"))) {
+            token.type = STRING;
+            token.text = token.text.substr(1, token.text.length() - 2);
         } else if (token.text == "+")  {
             token.type = PLUS;
         } else if (token.text == "-")  {
@@ -153,6 +156,7 @@ void Lexer::tokenize()
         // END   STDLIB
         } else {
             makeError(token, "Unexpected token `" + token.text + "`");
+            makeNote(token, "It is possible, that this unexpected token is string. If it is: do not use spaces in the strings!");
             std::exit(1);
         }
     }
@@ -168,7 +172,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
         if (!token.enabled && !inside) { continue; }
         switch (token.type) {
             case PUSH: {
-                stack.push_back(stoi(token.text));
+                stack.push_back(token.text);
+            } break;
+            case STRING: {
+                stack.push_back(token.text);
             } break;
             case DUP: {
                 stack.push_back(stack.back());
@@ -180,9 +187,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                int a = stack.back();
+                std::string a = stack.back();
                 stack.pop_back();
-                int b = stack.back();
+                std::string b = stack.back();
 
                 stack.push_back(b);
                 stack.push_back(a);
@@ -194,6 +201,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 stack.pop_back();
             } break;
             case SWAP: {
@@ -202,10 +210,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                std::string a = stack.back();
                 stack.pop_back();
-                int b = stack.back();
+                std::string b = stack.back();
                 stack.pop_back();
+
                 stack.push_back(a);
                 stack.push_back(b);
             } break;
@@ -215,10 +225,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                std::string a = stack.back();
                 stack.pop_back();
-                int b = stack.back();
+                std::string b = stack.back();
                 stack.pop_back();
+
                 stack.push_back(a + b);
             } break;
             case MINUS: {
@@ -227,11 +239,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b - a);
+
+                stack.push_back(std::to_string(b - a));
             } break;
             case MULT: {
                 if (stack.size() < 2) {
@@ -239,11 +253,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(a * b);
+
+                stack.push_back(std::to_string(a * b));
             } break;
             case DIV: {
                 if (stack.size() < 2) {
@@ -251,11 +267,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b / a);
+
+                stack.push_back(std::to_string(b / a));
             } break;
             case DUMP: {
                 if (stack.size() < 1) {
@@ -263,8 +281,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                std::string a = stack.back();
                 stack.pop_back();
+
                 std::cout << a << '\n';
             } break;
             case BIND: {
@@ -273,14 +293,17 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int value = stack.back();
+
+                std::string value = stack.back();
                 stack.pop_back();
-                int name = stack.back();
+                std::string name = stack.back();
                 stack.pop_back();
+
                 if (storage.contains(name)) {
-                    makeError(token, "There is a bind with the name `" + std::to_string(name) + "`!");
+                    makeError(token, "There is a bind with the name `" + name + "`!");
                     std::exit(1);
                 }
+
                 storage[name] = value;
             } break;
             case SAVE: {
@@ -289,23 +312,28 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int value = stack.back();
+
+                std::string value = stack.back();
                 stack.pop_back();
-                int name = stack.back();
+                std::string name = stack.back();
                 stack.pop_back();
+
                 if (!storage.contains(name)) {
-                    makeError(token, "There is no bind with the name `" + std::to_string(name) + "`!");
+                    makeError(token, "There is no bind with the name `" + name + "`!");
                     std::exit(1);
                 }
+
                 storage[name] = value;
             } break;
             case LOAD: {
-                int name = stack.back();
+                std::string name = stack.back();
                 stack.pop_back();
+
                 if (!storage.contains(name)) {
                     makeError(token, "There is no bind with that name!");
                     std::exit(1);
                 }
+
                 stack.push_back(storage[name]);
             } break;
             case TERNARY: {
@@ -314,11 +342,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int cond = stack.back();
+
+                long cond = std::stol(stack.back());
                 stack.pop_back();
-                int alt = stack.back();
+                std::string alt = stack.back();
                 stack.pop_back();
-                int main = stack.back();
+                std::string main = stack.back();
                 stack.pop_back();
 
                 if (cond) {
@@ -333,15 +362,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int name = stack.back();
+
+                std::string name = stack.back();
+
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
-                        makeError(token, "There is the procedure with the name `" + std::to_string(proc.name) + "`!");
+                        makeError(token, "There is the procedure with the name `" + proc.name + "`!");
                         printTokenLineInfo(token);
 
                         makeNote(proc, "Defined here.");
@@ -349,9 +381,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                         std::exit(1);
                     }
                 }
+
                 stack.pop_back();
+
                 std::vector<Token> body;
                 bool hasEnd = false;
+
                 for (Token& op : program) {
                     if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == MAKEPROC) continue;
                     if (op.type == ENDPROC && op.enabled) {
@@ -362,11 +397,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     op.enabled = false;
                     body.push_back(op);
                 }
+
                 if (!hasEnd) {
-                    makeError(token, "Unclosed procedure '" + std::to_string(name) + "'");
+                    makeError(token, "Unclosed procedure '" + name + "'");
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 Procedure proc(token.line, token.col, name, body);
                 procedureStorage.push_back(proc);
             } break;
@@ -383,9 +420,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int name = stack.back();
+
+                std::string name = stack.back();
                 stack.pop_back();
+
                 bool found = false;
+
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
                         intrepret(true, proc.getBody());
@@ -393,8 +433,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                         break;
                     }
                 }
+
                 if (!found) {
-                    makeError(token, "No such procedure '" + std::to_string(name) + "'");
+                    makeError(token, "No such procedure '" + name + "'");
                     std::exit(1);
                 }
             } break;
@@ -405,10 +446,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int cond = stack.back();
+
+                long cond = std::stol(stack.back());
                 stack.pop_back();
+
                 std::vector<Token> body;
                 bool hasEnd = false;
+
                 for (auto& op : program) {
                     if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == IF) continue;
                     if (op.type == ENDIF) {
@@ -419,11 +463,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     op.enabled = false;
                     body.push_back(op);
                 }
+
                 if (!hasEnd) {
                     makeError(token, "Unclosed IF");
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 if (cond) {
                     intrepret(true, body);
                 }
@@ -441,11 +487,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                std::string a = stack.back();
                 stack.pop_back();
-                int b = stack.back();
+                std::string b = stack.back();
                 stack.pop_back();
-                stack.push_back(b == a);
+
+                stack.push_back(std::to_string(b == a));
             } break;
             case NOTEQUAL: {
                 if (stack.size() < 2) {
@@ -453,11 +501,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                std::string a = stack.back();
                 stack.pop_back();
-                int b = stack.back();
+                std::string b = stack.back();
                 stack.pop_back();
-                stack.push_back(b != a);
+
+                stack.push_back(std::to_string(b != a));
             } break;
             case LESS: {
                 if (stack.size() < 2) {
@@ -465,11 +515,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b < a);
+
+                stack.push_back(std::to_string(b < a));
             } break;
             case LESSEQUAL: {
                 if (stack.size() < 2) {
@@ -477,11 +528,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b <= a);
+
+                stack.push_back(std::to_string(b <= a));
             } break;
             case GREATER: {
                 if (stack.size() < 2) {
@@ -489,11 +542,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b > a);
+
+                stack.push_back(std::to_string(b > a));
             } break;
             case GREATEREQUAL: {
                 if (stack.size() < 2) {
@@ -501,11 +556,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b >= a);
+
+                stack.push_back(std::to_string(b >= a));
             } break;
             case LOR: {
                 if (stack.size() < 2) {
@@ -513,11 +570,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b || a);
+
+                stack.push_back(std::to_string(b || a));
             } break;
             case LAND: {
                 if (stack.size() < 2) {
@@ -525,11 +584,13 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                int b = stack.back();
+                long b = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(b && a);
+
+                stack.push_back(std::to_string(b && a));
             } break;
             case LNOT: {
                 if (stack.size() < 1) {
@@ -537,15 +598,17 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                int a = stack.back();
+
+                long a = std::stol(stack.back());
                 stack.pop_back();
-                stack.push_back(!a);
+
+                stack.push_back(std::to_string(!a));
             } break;
             case TRUE: {
-                stack.push_back(1);
+                stack.push_back(std::to_string(1));
             } break;
             case FALSE: {
-                stack.push_back(0);
+                stack.push_back(std::to_string(0));
             } break;
             // START STDLIB
             // MATH
@@ -555,11 +618,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 makeNote(token, "Warning: result of sqrt operation will be an integer!");
-                int a = stack.back();
+                long a = std::stol(stack.back());
                 stack.pop_back();
 
-                stack.push_back(std::sqrt(a));
+                stack.push_back(std::to_string(std::sqrt(a)));
             } break;
             case STDLIB_MATH_COS: {
                 if (stack.size() < 1) {
@@ -567,11 +631,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 makeNote(token, "Warning: result of cos operation will be an integer!");
-                int a = stack.back();
+                long a = std::stol(stack.back());
                 stack.pop_back();
 
-                stack.push_back(std::cos(a));
+                stack.push_back(std::to_string(std::cos(a)));
             } break;
             case STDLIB_MATH_SIN: {
                 if (stack.size() < 1) {
@@ -579,11 +644,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
+
                 makeNote(token, "Warning: result of sin operation will be an integer!");
-                int a = stack.back();
+                long a = std::stol(stack.back());
                 stack.pop_back();
 
-                stack.push_back(std::sin(a));
+                stack.push_back(std::to_string(std::sin(a)));
             } break;
             // END MATH
             // END   STDLIB
