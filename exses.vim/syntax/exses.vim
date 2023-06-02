@@ -30,6 +30,7 @@ syntax match xesOperators '>='
 syntax match xesOperators '||'
 syntax match xesOperators '&&'
 syntax match xesOperators '!!'
+syntax match xesOperators '\[+]'
 
 syntax match xesStdlibMath 'Math(sqrt)'
 syntax match xesStdlibMath 'Math(sin)'
