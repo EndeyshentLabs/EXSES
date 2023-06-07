@@ -18,6 +18,7 @@ enum TokenType
     MULT,
     DIV,
     DUMP,
+    INPUT,
     BIND,
     SAVE,
     LOAD,

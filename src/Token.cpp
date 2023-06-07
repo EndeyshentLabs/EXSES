@@ -13,6 +13,7 @@ std::string TokenTypeString[] = {
     "MULT",
     "DIV",
     "DUMP",
+    "INPUT",
     "BIND",
     "SAVE",
     "LOAD",

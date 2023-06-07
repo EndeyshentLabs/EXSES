@@ -249,6 +249,11 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 std::cout << a << '\n';
             } break;
+            case INPUT: {
+                std::string input;
+                std::cin >> input;
+                stack.push_back(input);
+            } break;
             case BIND: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
@@ -663,6 +668,8 @@ TokenType Lexer::makeType(std::string text)
         return(SWAP);
     } else if (text == "!")  {
         return(DUMP);
+    } else if (text == "@")  {
+        return(INPUT);
     } else if (text == "<-") {
         return(BIND);
     } else if (text == "<!") {
