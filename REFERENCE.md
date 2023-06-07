@@ -12,6 +12,7 @@
 | MULT | `*` | `a b -- a*b` | Multiplies up 2 numbers on top of the stack |
 | DIV | `/` | `a b -- a/b` | Divides value on the top of the stack from value over the top of the stack |
 | DUMP | `!` | `a --` | Prints value on top of the stack and drop it from the stack |
+| INPUT | `@` | `-- userinputstr` | Reads input from the user and puts it on the stack(as str) |
 | BIND | `<-` | `name value --` | Binds `value` to `name` |
 | SAVE | `<!` | `name value --` | BIND but updating the binding |
 | LOAD | `^` | `name -- value` | Loads `value` of bind with the name `name` |
