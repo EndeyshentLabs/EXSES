@@ -1,0 +1,7 @@
+# skip
+# input: Endeyshent
+# output: What_Your_Name?
+# output: Hello,_Endeyshent
+[What_Your_Name?] !
+@
+[Hello,_] ! !

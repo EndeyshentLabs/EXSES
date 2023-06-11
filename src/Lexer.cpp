@@ -81,8 +81,9 @@ void Lexer::tokenize()
                     std::exit(1);
                 }
 
-                if (token.type == STRING) 
-                    token.text = token.text.substr(1, text.length() - 2);
+                if (token.type == STRING) {
+                    processStringLiteral(token);
+                }
 
                 this->program.push_back(token);
             } else {
@@ -97,8 +98,9 @@ void Lexer::tokenize()
                     std::exit(1);
                 }
 
-                if (token.type == STRING) 
-                    token.text = token.text.substr(1, text.length() - 2);
+                if (token.type == STRING) {
+                    processStringLiteral(token);
+                }
 
                 this->program.push_back(token);
             }
@@ -744,4 +746,34 @@ void printTokenLineInfo(T token)
         std::cout << " ";
     }
     std::cout << "^\033[0m\n";
+}
+
+void Lexer::processStringLiteral(Token& token)
+{
+    token.text = token.text.substr(1, token.text.length() - 2);
+    if (token.text.find('\\') != std::string::npos) {
+        unsigned int pos = 0;
+        for (auto c : token.text) {
+            if (c == '\\') {
+                Token escapePosTok(token.line, token.col + pos + 1, token.type, token.text);
+                switch (token.text[pos + 1]) {
+                    case 'n': {
+                        token.text.replace(pos, 2, "\n");
+                    } break;
+                    case 'r': {
+                        token.text.replace(pos, 2, "\r");
+                    } break;
+                    case 's': {
+                        token.text.replace(pos, 2, " ");
+                    } break;
+                    default: {
+                        makeError(escapePosTok, "Incomplete escape sequence");
+                        printTokenLineInfo(escapePosTok);
+                        std::exit(1);
+                    }
+                }
+            }
+            pos++;
+        }
+    }
 }

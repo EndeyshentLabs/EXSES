@@ -1,3 +1,4 @@
+# skip # marker for test.sh
 99 ' # create function '99'
     $& # copy element over the top
     $& # copy element over the top
