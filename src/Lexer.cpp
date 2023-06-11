@@ -766,6 +766,9 @@ void Lexer::processStringLiteral(Token& token)
                     case 's': {
                         token.text.replace(pos, 2, " ");
                     } break;
+                    case '+': {
+                        token.text.replace(pos, 2, "+");
+                    } break;
                     default: {
                         makeError(escapePosTok, "Incomplete escape sequence");
                         printTokenLineInfo(escapePosTok);

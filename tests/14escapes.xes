@@ -1,6 +1,8 @@
 # output: Endeyshent Laboratories
 # output: It
 # output: Works!
+# output: +
 [Endeyshent\sLaboratories] !
 [It\nWorks!] !
+[\+] !
 # [Secret\rNothing?] ! # NOTE: Broken

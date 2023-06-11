@@ -6,7 +6,8 @@ syntax keyword xesTodo contained TODO FIXME XXX NOTE
 
 syntax region xesCommentLine start="#" end="$" display contains=xesTodo
 
-syntax region xesString start='\[' end=']' display
+syntax match xesSpecial contained '\\[nrs+]'
+syntax region xesString start='\[' end=']' display contains=xesSpecial
 
 syntax match xesOperators '+'
 syntax match xesOperators '-'
@@ -54,5 +55,6 @@ highlight default link xesBooleans       Boolean
 highlight default link xesConditional    Conditional
 highlight default link xesStdlibMath     Function
 highlight default link xesString         String
+highlight default link xesSpecial        Special
 
 let b:current_syntax = 'exses'
