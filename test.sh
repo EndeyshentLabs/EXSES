@@ -47,7 +47,7 @@ function test_folder () {
     done
 
     local passed=$((num-failed-skipped))
-    printf  "$folder \e[32mTOTAL\e[0m:   $((num+skipped))\n"
+    printf  "$folder \e[32mTOTAL\e[0m:   $num\n"
     printf  "$folder \e[32mPASSED\e[0m:  $passed ($((passed*100/num))%%)\n"
     printf  "$folder SKIPPED: $skipped ($((skipped*100/num))%%)\n"
     printf  "$folder \e[31mFAILED\e[0m:  $failed ($((failed*100/num))%%)\n"
