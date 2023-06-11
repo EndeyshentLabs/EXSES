@@ -11,7 +11,7 @@ fi
 echo Building EXSI release...
 cmake --build release -j --config Release
 
-has_failed=p
+has_failed=0
 
 function test_folder () {
     local folder=$1
