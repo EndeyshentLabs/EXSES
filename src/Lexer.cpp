@@ -77,8 +77,6 @@ void Lexer::tokenize()
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
-                    printTokenLineInfo(token);
-                    makeNote(token, "String cannot contain spaces!");
                     std::exit(1);
                 }
 
@@ -94,7 +92,6 @@ void Lexer::tokenize()
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
-                    printTokenLineInfo(token);
                     makeNote(token, "String cannot contain spaces!");
                     std::exit(1);
                 }
@@ -134,7 +131,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case OVER: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -150,7 +146,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case DROP: {
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -159,7 +154,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case SWAP: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -174,7 +168,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case PLUS: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -185,7 +178,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `+` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -194,7 +186,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case STRING_PLUS: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -208,7 +199,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case MINUS: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -219,7 +209,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `-` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -228,7 +217,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case MULT: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -239,7 +227,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `*` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -248,7 +235,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case DIV: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -259,7 +245,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `/` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -268,7 +253,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case DUMP: {
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -285,7 +269,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case BIND: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -304,7 +287,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case SAVE: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -334,7 +316,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case TERNARY: {
                 if (stack.size() < 3) {
                     makeError(token, "Not enough elements on the stack! Expected 3, got " + std::to_string(stack.size()) + ".");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -354,13 +335,11 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case MAKEPROC: {
                 if (inside) {
                     makeError(token, "Possible procedure inside of another procedure");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -369,10 +348,8 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
                         makeError(token, "There is the procedure with the name `" + proc.name + "`!");
-                        printTokenLineInfo(token);
 
                         makeNote(proc, "Defined here.");
-                        printTokenLineInfo(proc);
                         std::exit(1);
                     }
                 }
@@ -395,7 +372,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (!hasEnd) {
                     makeError(token, "Unclosed procedure '" + name + "'");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -405,14 +381,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case ENDPROC: {
                 if (token.enabled) {
                     makeError(token, "Closing the procedure outside of any procedure!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
             } break;
             case INVOKEPROC: {
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected name of the procedure to invoke.");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -438,7 +412,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 if (inside) break;
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack! Expected condition.");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -461,7 +434,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (!hasEnd) {
                     makeError(token, "Unclosed IF");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -472,14 +444,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case ENDIF: {
                 if (token.enabled) {
                     makeError(token, "Closing IF statement outside of IF statement");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
             } break;
             case EQUAL: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -497,7 +467,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case NOTEQUAL: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -515,7 +484,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case LESS: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -526,7 +494,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `<` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -535,7 +502,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case LESSEQUAL: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -546,7 +512,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `<=` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -555,7 +520,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case GREATER: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -566,7 +530,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `>` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -575,7 +538,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case GREATEREQUAL: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -586,7 +548,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `>=` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -595,7 +556,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case LOR: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -606,7 +566,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `||` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -615,7 +574,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case LAND: {
                 if (stack.size() < 2) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -626,7 +584,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT || b.type != ValueType::INT) {
                     makeError(token, "Both arguments of `&&` operation must be an INTs!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -635,7 +592,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case LNOT: {
                 if (stack.size() < 1) {
                     makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -644,7 +600,6 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
                 if (a.type != ValueType::INT) {
                     makeError(token, "Arguments of `!!` operation must be an INT!");
-                    printTokenLineInfo(token);
                     std::exit(1);
                 }
 
@@ -757,6 +712,7 @@ TokenType Lexer::makeType(std::string text)
 void Lexer::makeError(Token token, std::string text)
 {
     std::cerr << tokenLocation(token) << ": \033[31mERROR\033[0m: " << text << '\n';
+    printTokenLineInfo(token);
 }
 
 std::string Lexer::tokenLocation(Token token)
@@ -765,8 +721,7 @@ std::string Lexer::tokenLocation(Token token)
 }
 
 template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
-void printTokenLineInfo(T token)
-{
+void printTokenLineInfo(T token) {
     std::printf("%d | %s\n", token.line+1, lines[token.line].c_str());
     for (unsigned int i = 0; i < std::to_string(token.line).length(); i++) {
         std::cout << " ";
@@ -801,7 +756,6 @@ void Lexer::processStringLiteral(Token& token)
                     } break;
                     default: {
                         makeError(escapePosTok, "Incomplete escape sequence");
-                        printTokenLineInfo(escapePosTok);
                         std::exit(1);
                     }
                 }
