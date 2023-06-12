@@ -13,12 +13,8 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 
 ### Hello, World!
 
-NOTE: see [#4](https://github.com/EndeyshentLabs/EXSES/issues/4)
-
 ```python
-[Hello,]
-[World!]
-$ ! !
+[Hello,\sWorld!] !
 ```
 
 ### Basic
@@ -34,7 +30,7 @@ $ ! !
 ### Control flow
 
 ```python
-500 80 > ( # if 500 is less than 80 do block. NOTE: `(` is if keyword in EXSES
+500 80 > ( # if 500 is less than 80 do following code block
     99 !
 ) # close the block
 ```
@@ -44,7 +40,7 @@ $ ! !
 #### Bindings
 
 ```python
-# bind 500 to '1100'
+# bind 500 to '1100'. NOTE: You can use strings as names
 1100 500 <-
 # bind 80 to '1101'
 1101 80 <-
@@ -60,7 +56,7 @@ $ ! !
 #### Procedures
 
 ```python
-1100 ' # int  # create a procedure named "1100"
+1100 ' # int  # create a procedure named "1100". NOTE: You can use strings as names
     80 - ! # body of the procedure. subtract 80 from the value that was on top of the stack when procedure was invoked and print the result
 " # close the procedure
 
