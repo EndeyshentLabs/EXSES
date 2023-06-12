@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <Value.hpp>
+
 enum TokenType
 {
     UNDEFINED = -1,
@@ -39,9 +41,6 @@ enum TokenType
     LNOT, // Logical NOT (aka !)
     TRUE,
     FALSE,
-    STDLIB_MATH_SQRT,
-    STDLIB_MATH_COS,
-    STDLIB_MATH_SIN
 };
 
 extern std::string TokenTypeString[];
@@ -51,7 +50,8 @@ struct Token
     unsigned int line;
     unsigned int col;
     TokenType type;
-    std::string text;
+    const std::string text;
+    Value value;
     bool enabled = true;
 };
 

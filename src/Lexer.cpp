@@ -11,6 +11,7 @@
 #include <utils.hpp>
 #include <Token.hpp>
 #include <Procedure.hpp>
+#include <Value.hpp>
 
 #define makeNote(tokenLike, text) \
     do { \
@@ -72,7 +73,7 @@ void Lexer::tokenize()
                 auto list = split(line.substr(col, colEnd), "\\s");
                 std::string text = list.front();
 
-                Token token(lineCount, col, makeType(text), text);
+                Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
@@ -89,7 +90,7 @@ void Lexer::tokenize()
             } else {
                 std::string text = line.substr(col, colEnd);
 
-                Token token(lineCount, col, makeType(text), text);
+                Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
 
                 if (token.type == UNDEFINED) {
                     makeError(token, "Unexpected token `" + token.text + "`");
@@ -122,10 +123,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
         if (!token.enabled && !inside) { continue; }
         switch (token.type) {
             case PUSH: {
-                stack.push_back(token.text);
+                stack.push_back(Value(ValueType::INT, token.value.text));
             } break;
             case STRING: {
-                stack.push_back(token.text);
+                stack.push_back(Value(ValueType::STRING, token.value.text));
             } break;
             case DUP: {
                 stack.push_back(stack.back());
@@ -137,9 +138,10 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                Value a = stack.back();
                 stack.pop_back();
-                std::string b = stack.back();
+                Value b = stack.back();
+                stack.pop_back();
 
                 stack.push_back(b);
                 stack.push_back(a);
@@ -161,9 +163,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                Value a = stack.back();
                 stack.pop_back();
-                std::string b = stack.back();
+                Value b = stack.back();
                 stack.pop_back();
 
                 stack.push_back(a);
@@ -176,12 +178,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(a + b));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `+` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) + std::stol(b.text))));
             } break;
             case STRING_PLUS: {
                 if (stack.size() < 2) {
@@ -190,12 +198,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                Value a = stack.back();
                 stack.pop_back();
-                std::string b = stack.back();
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(a + b);
+                stack.push_back(Value(ValueType::STRING, a.text + b.text));
             } break;
             case MINUS: {
                 if (stack.size() < 2) {
@@ -204,12 +212,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b - a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `-` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) - std::stol(a.text))));
             } break;
             case MULT: {
                 if (stack.size() < 2) {
@@ -218,12 +232,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(a * b));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `*` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) * std::stol(b.text))));
             } break;
             case DIV: {
                 if (stack.size() < 2) {
@@ -232,12 +252,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b / a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `/` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) / std::stol(a.text))));
             } break;
             case DUMP: {
                 if (stack.size() < 1) {
@@ -246,7 +272,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                std::string a = stack.back().text;
                 stack.pop_back();
 
                 std::cout << a << '\n';
@@ -254,7 +280,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
             case INPUT: {
                 std::string input;
                 std::cin >> input;
-                stack.push_back(input);
+                stack.push_back(Value(ValueType::STRING, input));
             } break;
             case BIND: {
                 if (stack.size() < 2) {
@@ -263,9 +289,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string value = stack.back();
+                Value value = stack.back();
                 stack.pop_back();
-                std::string name = stack.back();
+                std::string name = stack.back().text;
                 stack.pop_back();
 
                 if (storage.contains(name)) {
@@ -282,9 +308,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string value = stack.back();
+                Value value = stack.back();
                 stack.pop_back();
-                std::string name = stack.back();
+                std::string name = stack.back().text;
                 stack.pop_back();
 
                 if (!storage.contains(name)) {
@@ -295,7 +321,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                 storage[name] = value;
             } break;
             case LOAD: {
-                std::string name = stack.back();
+                std::string name = stack.back().text;
                 stack.pop_back();
 
                 if (!storage.contains(name)) {
@@ -303,7 +329,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                stack.push_back(storage[name]);
+                stack.push_back(Value(storage[name].type, storage[name].text));
             } break;
             case TERNARY: {
                 if (stack.size() < 3) {
@@ -312,11 +338,11 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long cond = std::stol(stack.back());
+                long cond = std::stol(stack.back().text);
                 stack.pop_back();
-                std::string alt = stack.back();
+                Value alt = stack.back();
                 stack.pop_back();
-                std::string main = stack.back();
+                Value main = stack.back();
                 stack.pop_back();
 
                 if (cond) {
@@ -338,7 +364,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string name = stack.back();
+                std::string name = stack.back().text;
 
                 for (Procedure proc : procedureStorage) {
                     if (proc.name == name) {
@@ -390,7 +416,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string name = stack.back();
+                std::string name = stack.back().text;
                 stack.pop_back();
 
                 bool found = false;
@@ -416,7 +442,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long cond = std::stol(stack.back());
+                long cond = std::stol(stack.back().text);
                 stack.pop_back();
 
                 std::vector<Token> body;
@@ -457,12 +483,16 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                Value a = stack.back();
                 stack.pop_back();
-                std::string b = stack.back();
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b == a));
+                if (a.type == b.type) {
+                    stack.push_back(Value(ValueType::INT, std::to_string(b == a)));
+                } else {
+                    stack.push_back(Value(ValueType::INT, "0"));
+                }
             } break;
             case NOTEQUAL: {
                 if (stack.size() < 2) {
@@ -471,12 +501,16 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                std::string a = stack.back();
+                Value a = stack.back();
                 stack.pop_back();
-                std::string b = stack.back();
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b != a));
+                if (a.type == b.type) {
+                    stack.push_back(Value(ValueType::INT, std::to_string(b.text != a.text)));
+                } else {
+                    stack.push_back(Value(ValueType::INT, "1"));
+                }
             } break;
             case LESS: {
                 if (stack.size() < 2) {
@@ -484,12 +518,19 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     printTokenLineInfo(token);
                     std::exit(1);
                 }
-                long a = std::stol(stack.back());
+
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b < a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `<` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) < std::stol(a.text))));
             } break;
             case LESSEQUAL: {
                 if (stack.size() < 2) {
@@ -498,12 +539,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b <= a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `<=` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) <= std::stol(a.text))));
             } break;
             case GREATER: {
                 if (stack.size() < 2) {
@@ -512,12 +559,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b > a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `>` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) > std::stol(a.text))));
             } break;
             case GREATEREQUAL: {
                 if (stack.size() < 2) {
@@ -526,12 +579,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b >= a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `>=` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) >= std::stol(a.text))));
             } break;
             case LOR: {
                 if (stack.size() < 2) {
@@ -540,12 +599,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b || a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `||` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) || std::stol(a.text))));
             } break;
             case LAND: {
                 if (stack.size() < 2) {
@@ -554,12 +619,18 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
-                long b = std::stol(stack.back());
+                Value b = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(b && a));
+                if (a.type != ValueType::INT || b.type != ValueType::INT) {
+                    makeError(token, "Both arguments of `&&` operation must be an INTs!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) && std::stol(a.text))));
             } break;
             case LNOT: {
                 if (stack.size() < 1) {
@@ -568,56 +639,22 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
                     std::exit(1);
                 }
 
-                long a = std::stol(stack.back());
+                Value a = stack.back();
                 stack.pop_back();
 
-                stack.push_back(std::to_string(!a));
+                if (a.type != ValueType::INT) {
+                    makeError(token, "Arguments of `!!` operation must be an INT!");
+                    printTokenLineInfo(token);
+                    std::exit(1);
+                }
+
+                stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(a.text))));
             } break;
             case TRUE: {
-                stack.push_back(std::to_string(1));
+                stack.push_back(Value(ValueType::INT, std::to_string(1)));
             } break;
             case FALSE: {
-                stack.push_back(std::to_string(0));
-            } break;
-            // START STDLIB
-            case STDLIB_MATH_SQRT: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
-                    std::exit(1);
-                }
-
-                makeNote(token, "Warning: result of sqrt operation will be an integer!");
-                long a = std::stol(stack.back());
-                stack.pop_back();
-
-                stack.push_back(std::to_string(std::sqrt(a)));
-            } break;
-            case STDLIB_MATH_COS: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
-                    std::exit(1);
-                }
-
-                makeNote(token, "Warning: result of cos operation will be an integer!");
-                long a = std::stol(stack.back());
-                stack.pop_back();
-
-                stack.push_back(std::to_string(std::cos(a)));
-            } break;
-            case STDLIB_MATH_SIN: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack!");
-                    printTokenLineInfo(token);
-                    std::exit(1);
-                }
-
-                makeNote(token, "Warning: result of sin operation will be an integer!");
-                long a = std::stol(stack.back());
-                stack.pop_back();
-
-                stack.push_back(std::to_string(std::sin(a)));
+                stack.push_back(Value(ValueType::INT, std::to_string(0)));
             } break;
             case UNDEFINED: {
                 std::cerr << "ERROR: UNREACHABLE\n";
@@ -633,7 +670,7 @@ void Lexer::run()
 #   if !defined(NDEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
-        std::printf("%s: type: %s, text: `%s`, enabled: %s\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str(), (token.enabled) ? "true" : "false");
+        std::printf("%s: type: %s, text: `%s`\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
     }
 #   endif
     if (this->target == EXSI) {
@@ -647,78 +684,71 @@ void Lexer::run()
 TokenType Lexer::makeType(std::string text)
 {
     if (isInteger(text)) {
-        return(PUSH);
+        return PUSH;
     } else if (text == "[+]")  {
-        return(STRING_PLUS);
+        return STRING_PLUS;
     } else if (std::regex_match(text, std::regex("\\[.*\\]"))) {
-        return(STRING);
+        return STRING;
     } else if (text == "+")  {
-        return(PLUS);
+        return PLUS;
     } else if (text == "-")  {
-        return(MINUS);
+        return MINUS;
     } else if (text == "*")  {
-        return(MULT);
+        return MULT;
     } else if (text == "/")  {
-        return(DIV);
+        return DIV;
     } else if (text == "&")  {
-        return(DUP);
+        return DUP;
     } else if (text == "$&")  {
-        return(OVER);
+        return OVER;
     } else if (text == "_")  {
-        return(DROP);
+        return DROP;
     } else if (text == "$")  {
-        return(SWAP);
+        return SWAP;
     } else if (text == "!")  {
-        return(DUMP);
+        return DUMP;
     } else if (text == "@")  {
-        return(INPUT);
+        return INPUT;
     } else if (text == "<-") {
-        return(BIND);
+        return BIND;
     } else if (text == "<!") {
-        return(SAVE);
+        return SAVE;
     } else if (text == "^") {
-        return(LOAD);
+        return LOAD;
     } else if (text == ".?") {
-        return(TERNARY);
+        return TERNARY;
     } else if (text == "'") {
-        return(MAKEPROC);
+        return MAKEPROC;
     } else if (text == "\"") {
-        return(ENDPROC);
+        return ENDPROC;
     } else if (text == ":") {
-        return(INVOKEPROC);
+        return INVOKEPROC;
     } else if (text == "(") {
-        return(IF);
+        return IF;
     } else if (text == ")") {
-        return(ENDIF);
+        return ENDIF;
     } else if (text == "=") {
-        return(EQUAL);
+        return EQUAL;
     } else if (text == "<>") {
-        return(NOTEQUAL);
+        return NOTEQUAL;
     } else if (text == "<") {
-        return(LESS);
+        return LESS;
     } else if (text == "<=") {
-        return(LESSEQUAL);
+        return LESSEQUAL;
     } else if (text == ">") {
-        return(GREATER);
+        return GREATER;
     } else if (text == ">=") {
-        return(GREATEREQUAL);
+        return GREATEREQUAL;
     } else if (text == "||") {
-        return(LOR);
+        return LOR;
     } else if (text == "&&") {
-        return(LAND);
+        return LAND;
     } else if (text == "!!") {
-        return(LNOT);
+        return LNOT;
     } else if (text == "true") {
-        return(TRUE);
+        return TRUE;
     } else if (text == "false") {
-        return(FALSE);
-    // STDLIB
-    } else if (text == "Math(sqrt)") {
-        return(STDLIB_MATH_SQRT);
-    } else if (text == "Math(cos)") {
-        return(STDLIB_MATH_COS);
-    } else if (text == "Math(sin)") {
-        return(STDLIB_MATH_SIN);
+        return FALSE;
     }
 
     return UNDEFINED;
@@ -750,24 +780,24 @@ void printTokenLineInfo(T token)
 
 void Lexer::processStringLiteral(Token& token)
 {
-    token.text = token.text.substr(1, token.text.length() - 2);
-    if (token.text.find('\\') != std::string::npos) {
+    token.value.text = token.text.substr(1, token.text.length() - 2);
+    if (token.value.text.find('\\') != std::string::npos) {
         unsigned int pos = 0;
-        for (auto c : token.text) {
+        for (auto c : token.value.text) {
             if (c == '\\') {
-                Token escapePosTok(token.line, token.col + pos + 1, token.type, token.text);
-                switch (token.text[pos + 1]) {
+                Token escapePosTok(token.line, token.col + pos + 1, token.type, token.value.text, Value(ValueType::STRING, token.value.text));
+                switch (token.value.text[pos + 1]) {
                     case 'n': {
-                        token.text.replace(pos, 2, "\n");
+                        token.value.text.replace(pos, 2, "\n");
                     } break;
                     case 'r': {
-                        token.text.replace(pos, 2, "\r");
+                        token.value.text.replace(pos, 2, "\r");
                     } break;
                     case 's': {
-                        token.text.replace(pos, 2, " ");
+                        token.value.text.replace(pos, 2, " ");
                     } break;
                     case '+': {
-                        token.text.replace(pos, 2, "+");
+                        token.value.text.replace(pos, 2, "+");
                     } break;
                     default: {
                         makeError(escapePosTok, "Incomplete escape sequence");
