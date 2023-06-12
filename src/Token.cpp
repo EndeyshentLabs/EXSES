@@ -34,7 +34,4 @@ std::string TokenTypeString[] = {
     "LNOT",
     "TRUE",
     "FALSE",
-    "STDLIB_MATH_SQRT",
-    "STDLIB_MATH_COS",
-    "STDLIB_MATH_SIN"
 };

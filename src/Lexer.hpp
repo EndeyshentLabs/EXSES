@@ -25,8 +25,8 @@ private:
     std::string source;
     std::string fileName;
     std::vector<Token> program;
-    std::vector<std::string> stack;
-    std::map<std::string, std::string> storage;
+    std::vector<Value> stack;
+    std::map<std::string, Value> storage;
     std::vector<Procedure> procedureStorage;
     TokenType makeType(std::string text);
     void makeError(Token token, std::string text);
