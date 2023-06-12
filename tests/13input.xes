@@ -1,7 +1,10 @@
 # skip
 # input: Endeyshent
-# output: What_Your_Name?
-# output: Hello,_Endeyshent
-[What_Your_Name?] !
+# output: What's your name?
+# output: Hello, Endeyshent!
+[What's\syour\sname?] !
+
 @
-[Hello,_] ! !
+[Hello,\s] [+]
+[!] $ [+]
+!
