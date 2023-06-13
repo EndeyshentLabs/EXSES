@@ -22,4 +22,17 @@ add_executable(
 
 target_include_directories(exsi PUBLIC src)
 
-target_compile_options(exsi PRIVATE -Wall -Wextra -pedantic -Werror=switch -fdiagnostics-color)
+target_compile_options(exsi PRIVATE
+    -Wall
+    -Wextra
+    -pedantic
+    -Werror=switch
+    -fdiagnostics-color
+    $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3 -DDEBUG>
+    $<$<CONFIG:RELEASE>:-O3>
+)
+
+target_link_options(exsi PRIVATE
+    $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3>
+    $<$<CONFIG:RELEASE>:-O3>
+)

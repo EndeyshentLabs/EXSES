@@ -622,7 +622,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 void Lexer::run()
 {
     this->tokenize();
-#   if !defined(NDEBUG)
+#   if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
         std::printf("%s: type: %s, text: `%s`\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
