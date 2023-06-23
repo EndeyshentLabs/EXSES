@@ -25,11 +25,13 @@ private:
     std::string source;
     std::string fileName;
     std::vector<Token> program;
-    std::vector<int> stack;
-    std::map<int, int> storage;
+    std::vector<Value> stack;
+    std::map<std::string, Value> storage;
     std::vector<Procedure> procedureStorage;
+    TokenType makeType(std::string text);
     void makeError(Token token, std::string text);
     std::string tokenLocation(Token token);
+    void processStringLiteral(Token& token);
 };
 
 template<typename T> // This trick is needed for compatibility with both Token and Procedure classes

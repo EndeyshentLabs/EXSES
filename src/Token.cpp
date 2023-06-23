@@ -2,6 +2,8 @@
 
 std::string TokenTypeString[] = {
     "PUSH",
+    "STRING",
+    "STRING_PLUS",
     "DUP",
     "OVER",
     "DROP",
@@ -11,6 +13,7 @@ std::string TokenTypeString[] = {
     "MULT",
     "DIV",
     "DUMP",
+    "INPUT",
     "BIND",
     "SAVE",
     "LOAD",
@@ -30,5 +33,5 @@ std::string TokenTypeString[] = {
     "LAND",
     "LNOT",
     "TRUE",
-    "FALSE"
+    "FALSE",
 };

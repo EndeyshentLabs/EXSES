@@ -1,2 +1,4 @@
-.cache/
-build
+.cache/clangd/index
+[Bb]uild/
+release/
+debug/

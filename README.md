@@ -7,7 +7,15 @@
 <img src="./assets/logo1.png" alt="EXSES logp" width="128" />
 EXSES - smol stack-oriented concatenative programming language. Development have just started: do not expect something revolutionary new.
 
+## [Language Reference](./REFERENCE.md) 
+
 ## Example
+
+### Hello, World!
+
+```python
+[Hello,\sWorld!] !
+```
 
 ### Basic
 
@@ -22,7 +30,7 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 ### Control flow
 
 ```python
-500 80 > ( # if 500 is less than 80 do block. NOTE: `(` is if keyword in EXSES
+500 80 > ( # if 500 is less than 80 do following code block
     99 !
 ) # close the block
 ```
@@ -32,7 +40,7 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 #### Bindings
 
 ```python
-# bind 500 to '1100'
+# bind 500 to '1100'. NOTE: You can use strings as names
 1100 500 <-
 # bind 80 to '1101'
 1101 80 <-
@@ -48,7 +56,7 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 #### Procedures
 
 ```python
-1100 ' # int  # create a procedure named "1100"
+1100 ' # int  # create a procedure named "1100". NOTE: You can use strings as names
     80 - ! # body of the procedure. subtract 80 from the value that was on top of the stack when procedure was invoked and print the result
 " # close the procedure
 

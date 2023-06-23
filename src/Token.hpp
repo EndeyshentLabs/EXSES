@@ -3,10 +3,14 @@
 
 #include <string>
 
+#include <Value.hpp>
+
 enum TokenType
 {
     UNDEFINED = -1,
     PUSH = 0,
+    STRING,
+    STRING_PLUS,
     DUP,
     OVER,
     DROP,
@@ -16,6 +20,7 @@ enum TokenType
     MULT,
     DIV,
     DUMP,
+    INPUT,
     BIND,
     SAVE,
     LOAD,
@@ -35,7 +40,7 @@ enum TokenType
     LAND, // Logical AND (aka &&)
     LNOT, // Logical NOT (aka !)
     TRUE,
-    FALSE
+    FALSE,
 };
 
 extern std::string TokenTypeString[];
@@ -45,7 +50,8 @@ struct Token
     unsigned int line;
     unsigned int col;
     TokenType type;
-    std::string text;
+    const std::string text;
+    Value value;
     bool enabled = true;
 };
 
