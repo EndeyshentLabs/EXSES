@@ -54,58 +54,14 @@ int chopWord(std::string line, unsigned int col)
     return col;
 }
 
+unsigned int lineCount = 0;
+
 void Lexer::tokenize()
 {
     lines = split(source, "\\n");
-    unsigned int lineCount = 0;
 
     for (std::string line : lines) {
-        unsigned int col = chopWord(line, 0);
-        unsigned int colEnd = 0;
-
-        if (line.find("#") != std::string::npos) {
-            line = line.substr(0, line.find("#"));
-        }
-
-        while (col < line.length()) {
-            colEnd = stripByCol(line, col);
-            if (line.substr(col, colEnd).find(" ") != std::string::npos) { // TODO: make it better
-                auto list = split(line.substr(col, colEnd), "\\s");
-                std::string text = list.front();
-
-                Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
-
-                if (token.type == UNDEFINED) {
-                    makeError(token, "Unexpected token `" + token.text + "`");
-                    std::exit(1);
-                }
-
-                if (token.type == STRING) {
-                    processStringLiteral(token);
-                }
-
-                this->program.push_back(token);
-            } else {
-                std::string text = line.substr(col, colEnd);
-
-                Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
-
-                if (token.type == UNDEFINED) {
-                    makeError(token, "Unexpected token `" + token.text + "`");
-                    makeNote(token, "String cannot contain spaces!");
-                    std::exit(1);
-                }
-
-                if (token.type == STRING) {
-                    processStringLiteral(token);
-                }
-
-                this->program.push_back(token);
-            }
-            col = chopWord(line, colEnd);
-        }
-
-        lineCount++;
+        lexLine(line);
     }
 }
 
@@ -118,504 +74,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
     for (Token token : (inside ? procBody : this->program)) {
         if (!token.enabled && !inside) { continue; }
-        switch (token.type) {
-            case PUSH: {
-                stack.push_back(Value(ValueType::INT, token.value.text));
-            } break;
-            case STRING: {
-                stack.push_back(Value(ValueType::STRING, token.value.text));
-            } break;
-            case DUP: {
-                stack.push_back(stack.back());
-            } break;
-            case OVER: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                stack.push_back(b);
-                stack.push_back(a);
-                stack.push_back(b);
-            } break;
-            case DROP: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                stack.pop_back();
-            } break;
-            case SWAP: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                stack.push_back(a);
-                stack.push_back(b);
-            } break;
-            case PLUS: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `+` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) + std::stol(b.text))));
-            } break;
-            case STRING_PLUS: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                stack.push_back(Value(ValueType::STRING, a.text + b.text));
-            } break;
-            case MINUS: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `-` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) - std::stol(a.text))));
-            } break;
-            case MULT: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `*` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) * std::stol(b.text))));
-            } break;
-            case DIV: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `/` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) / std::stol(a.text))));
-            } break;
-            case DUMP: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                std::string a = stack.back().text;
-                stack.pop_back();
-
-                std::cout << a << '\n';
-            } break;
-            case INPUT: {
-                std::string input;
-                std::cin >> input;
-                stack.push_back(Value(ValueType::STRING, input));
-            } break;
-            case BIND: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value value = stack.back();
-                stack.pop_back();
-                std::string name = stack.back().text;
-                stack.pop_back();
-
-                if (storage.contains(name)) {
-                    makeError(token, "There is a bind with the name `" + name + "`!");
-                    std::exit(1);
-                }
-
-                storage[name] = value;
-            } break;
-            case SAVE: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                Value value = stack.back();
-                stack.pop_back();
-                std::string name = stack.back().text;
-                stack.pop_back();
-
-                if (!storage.contains(name)) {
-                    makeError(token, "There is no bind with the name `" + name + "`!");
-                    std::exit(1);
-                }
-
-                storage[name] = value;
-            } break;
-            case LOAD: {
-                std::string name = stack.back().text;
-                stack.pop_back();
-
-                if (!storage.contains(name)) {
-                    makeError(token, "There is no bind with that name!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(storage[name].type, storage[name].text));
-            } break;
-            case TERNARY: {
-                if (stack.size() < 3) {
-                    makeError(token, "Not enough elements on the stack! Expected 3, got " + std::to_string(stack.size()) + ".");
-                    std::exit(1);
-                }
-
-                long cond = std::stol(stack.back().text);
-                stack.pop_back();
-                Value alt = stack.back();
-                stack.pop_back();
-                Value main = stack.back();
-                stack.pop_back();
-
-                if (cond) {
-                    stack.push_back(main);
-                } else {
-                    stack.push_back(alt);
-                }
-            } break;
-            case MAKEPROC: {
-                if (inside) {
-                    makeError(token, "Possible procedure inside of another procedure");
-                    std::exit(1);
-                }
-
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
-                    std::exit(1);
-                }
-
-                std::string name = stack.back().text;
-
-                for (Procedure proc : procedureStorage) {
-                    if (proc.name == name) {
-                        makeError(token, "There is the procedure with the name `" + proc.name + "`!");
-
-                        makeNote(proc, "Defined here.");
-                        std::exit(1);
-                    }
-                }
-
-                stack.pop_back();
-
-                std::vector<Token> body;
-                bool hasEnd = false;
-
-                for (Token& op : program) {
-                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == MAKEPROC) continue;
-                    if (op.type == ENDPROC && op.enabled) {
-                        op.enabled = false;
-                        hasEnd = true;
-                        break;
-                    }
-                    op.enabled = false;
-                    body.push_back(op);
-                }
-
-                if (!hasEnd) {
-                    makeError(token, "Unclosed procedure '" + name + "'");
-                    std::exit(1);
-                }
-
-                Procedure proc(token.line, token.col, name, body);
-                procedureStorage.push_back(proc);
-            } break;
-            case ENDPROC: {
-                if (token.enabled) {
-                    makeError(token, "Closing the procedure outside of any procedure!");
-                    std::exit(1);
-                }
-            } break;
-            case INVOKEPROC: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack! Expected name of the procedure to invoke.");
-                    std::exit(1);
-                }
-
-                std::string name = stack.back().text;
-                stack.pop_back();
-
-                bool found = false;
-
-                for (Procedure proc : procedureStorage) {
-                    if (proc.name == name) {
-                        intrepret(true, proc.getBody());
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    makeError(token, "No such procedure '" + name + "'");
-                    std::exit(1);
-                }
-            } break;
-            case IF: {
-                if (inside) break;
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack! Expected condition.");
-                    std::exit(1);
-                }
-
-                long cond = std::stol(stack.back().text);
-                stack.pop_back();
-
-                std::vector<Token> body;
-                bool hasEnd = false;
-
-                for (auto& op : program) {
-                    if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == IF) continue;
-                    if (op.type == ENDIF) {
-                        hasEnd = true;
-                        op.enabled = false;
-                        break;
-                    }
-                    op.enabled = false;
-                    body.push_back(op);
-                }
-
-                if (!hasEnd) {
-                    makeError(token, "Unclosed IF");
-                    std::exit(1);
-                }
-
-                if (cond) {
-                    intrepret(true, body);
-                }
-            } break;
-            case ENDIF: {
-                if (token.enabled) {
-                    makeError(token, "Closing IF statement outside of IF statement");
-                    std::exit(1);
-                }
-            } break;
-            case EQUAL: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type == b.type) {
-                    stack.push_back(Value(ValueType::INT, std::to_string(b == a)));
-                } else {
-                    stack.push_back(Value(ValueType::INT, "0"));
-                }
-            } break;
-            case NOTEQUAL: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type == b.type) {
-                    stack.push_back(Value(ValueType::INT, std::to_string(b.text != a.text)));
-                } else {
-                    stack.push_back(Value(ValueType::INT, "1"));
-                }
-            } break;
-            case LESS: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `<` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) < std::stol(a.text))));
-            } break;
-            case LESSEQUAL: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `<=` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) <= std::stol(a.text))));
-            } break;
-            case GREATER: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `>` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) > std::stol(a.text))));
-            } break;
-            case GREATEREQUAL: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `>=` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) >= std::stol(a.text))));
-            } break;
-            case LOR: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `||` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) || std::stol(a.text))));
-            } break;
-            case LAND: {
-                if (stack.size() < 2) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-                Value b = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT || b.type != ValueType::INT) {
-                    makeError(token, "Both arguments of `&&` operation must be an INTs!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) && std::stol(a.text))));
-            } break;
-            case LNOT: {
-                if (stack.size() < 1) {
-                    makeError(token, "Not enough elements on the stack!");
-                    std::exit(1);
-                }
-
-                Value a = stack.back();
-                stack.pop_back();
-
-                if (a.type != ValueType::INT) {
-                    makeError(token, "Arguments of `!!` operation must be an INT!");
-                    std::exit(1);
-                }
-
-                stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(a.text))));
-            } break;
-            case TRUE: {
-                stack.push_back(Value(ValueType::INT, std::to_string(1)));
-            } break;
-            case FALSE: {
-                stack.push_back(Value(ValueType::INT, std::to_string(0)));
-            } break;
-            case UNDEFINED: {
-                std::cerr << "ERROR: UNREACHABLE\n";
-                std::exit(1);
-            } break;
-        }
+        processToken(token, inside);
     }
 }
 
@@ -763,4 +222,546 @@ void Lexer::processStringLiteral(Token& token)
             pos++;
         }
     }
+}
+
+void Lexer::processToken(Token& token, bool inside)
+{
+    switch (token.type) {
+    case PUSH: {
+        stack.push_back(Value(ValueType::INT, token.value.text));
+    } break;
+    case STRING: {
+        stack.push_back(Value(ValueType::STRING, token.value.text));
+    } break;
+    case DUP: {
+        stack.push_back(stack.back());
+    } break;
+    case OVER: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        stack.push_back(b);
+        stack.push_back(a);
+        stack.push_back(b);
+    } break;
+    case DROP: {
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        stack.pop_back();
+    } break;
+    case SWAP: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        stack.push_back(a);
+        stack.push_back(b);
+    } break;
+    case PLUS: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `+` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) + std::stol(b.text))));
+    } break;
+    case STRING_PLUS: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        stack.push_back(Value(ValueType::STRING, a.text + b.text));
+    } break;
+    case MINUS: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `-` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) - std::stol(a.text))));
+    } break;
+    case MULT: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `*` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) * std::stol(b.text))));
+    } break;
+    case DIV: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `/` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) / std::stol(a.text))));
+    } break;
+    case DUMP: {
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        std::string a = stack.back().text;
+        stack.pop_back();
+
+        std::cout << a << '\n';
+    } break;
+    case INPUT: {
+        std::string input;
+        std::cin >> input;
+        stack.push_back(Value(ValueType::STRING, input));
+    } break;
+    case BIND: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value value = stack.back();
+        stack.pop_back();
+        std::string name = stack.back().text;
+        stack.pop_back();
+
+        if (storage.contains(name)) {
+            makeError(token, "There is a bind with the name `" + name + "`!");
+            std::exit(1);
+        }
+
+        storage[name] = value;
+    } break;
+    case SAVE: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        Value value = stack.back();
+        stack.pop_back();
+        std::string name = stack.back().text;
+        stack.pop_back();
+
+        if (!storage.contains(name)) {
+            makeError(token, "There is no bind with the name `" + name + "`!");
+            std::exit(1);
+        }
+
+        storage[name] = value;
+    } break;
+    case LOAD: {
+        std::string name = stack.back().text;
+        stack.pop_back();
+
+        if (!storage.contains(name)) {
+            makeError(token, "There is no bind with that name!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(storage[name].type, storage[name].text));
+    } break;
+    case TERNARY: {
+        if (stack.size() < 3) {
+            makeError(token, "Not enough elements on the stack! Expected 3, got " + std::to_string(stack.size()) + ".");
+            std::exit(1);
+        }
+
+        long cond = std::stol(stack.back().text);
+        stack.pop_back();
+        Value alt = stack.back();
+        stack.pop_back();
+        Value main = stack.back();
+        stack.pop_back();
+
+        if (cond) {
+            stack.push_back(main);
+        } else {
+            stack.push_back(alt);
+        }
+    } break;
+    case MAKEPROC: {
+        if (inside) {
+            makeError(token, "Possible procedure inside of another procedure");
+            std::exit(1);
+        }
+
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
+            std::exit(1);
+        }
+
+        std::string name = stack.back().text;
+
+        for (Procedure proc : procedureStorage) {
+            if (proc.name == name) {
+                makeError(token, "There is the procedure with the name `" + proc.name + "`!");
+
+                makeNote(proc, "Defined here.");
+                std::exit(1);
+            }
+        }
+
+        stack.pop_back();
+
+        std::vector<Token> body;
+        bool hasEnd = false;
+
+        hasEnd = processFolded(token, MAKEPROC, ENDPROC, body);
+
+        if (!hasEnd) {
+            makeError(token, "Unclosed procedure '" + name + "'");
+            std::exit(1);
+        }
+
+        Procedure proc(token.line, token.col, name, body);
+        procedureStorage.push_back(proc);
+    } break;
+    case ENDPROC: {
+        if (token.enabled) {
+            makeError(token, "Closing the procedure outside of any procedure!");
+            std::exit(1);
+        }
+    } break;
+    case INVOKEPROC: {
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack! Expected name of the procedure to invoke.");
+            std::exit(1);
+        }
+
+        std::string name = stack.back().text;
+        stack.pop_back();
+
+        bool found = false;
+
+        for (Procedure proc : procedureStorage) {
+            if (proc.name == name) {
+                intrepret(true, proc.getBody());
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            makeError(token, "No such procedure '" + name + "'");
+            std::exit(1);
+        }
+    } break;
+    case IF: {
+        if (inside) break;
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack! Expected condition.");
+            std::exit(1);
+        }
+
+        long cond = std::stol(stack.back().text);
+        stack.pop_back();
+
+        std::vector<Token> body;
+        bool hasEnd = false;
+
+        hasEnd = processFolded(token, IF, ENDIF, body);
+
+        if (!hasEnd) {
+            makeError(token, "Unclosed IF");
+            std::exit(1);
+        }
+
+        if (cond) {
+            intrepret(true, body);
+        }
+    } break;
+    case ENDIF: {
+        if (token.enabled) {
+            makeError(token, "Closing IF statement outside of IF statement");
+            std::exit(1);
+        }
+    } break;
+    case EQUAL: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type == b.type) {
+            stack.push_back(Value(ValueType::INT, std::to_string(b == a)));
+        } else {
+            stack.push_back(Value(ValueType::INT, "0"));
+        }
+    } break;
+    case NOTEQUAL: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type == b.type) {
+            stack.push_back(Value(ValueType::INT, std::to_string(b.text != a.text)));
+        } else {
+            stack.push_back(Value(ValueType::INT, "1"));
+        }
+    } break;
+    case LESS: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `<` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) < std::stol(a.text))));
+    } break;
+    case LESSEQUAL: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `<=` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) <= std::stol(a.text))));
+    } break;
+    case GREATER: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `>` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) > std::stol(a.text))));
+    } break;
+    case GREATEREQUAL: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `>=` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) >= std::stol(a.text))));
+    } break;
+    case LOR: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `||` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) || std::stol(a.text))));
+    } break;
+    case LAND: {
+        if (stack.size() < 2) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+        Value b = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT || b.type != ValueType::INT) {
+            makeError(token, "Both arguments of `&&` operation must be an INTs!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) && std::stol(a.text))));
+    } break;
+    case LNOT: {
+        if (stack.size() < 1) {
+            makeError(token, "Not enough elements on the stack!");
+            std::exit(1);
+        }
+
+        Value a = stack.back();
+        stack.pop_back();
+
+        if (a.type != ValueType::INT) {
+            makeError(token, "Arguments of `!!` operation must be an INT!");
+            std::exit(1);
+        }
+
+        stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(a.text))));
+    } break;
+    case TRUE: {
+        stack.push_back(Value(ValueType::INT, std::to_string(1)));
+    } break;
+    case FALSE: {
+        stack.push_back(Value(ValueType::INT, std::to_string(0)));
+    } break;
+    case UNDEFINED: {
+        std::cerr << "ERROR: UNREACHABLE\n";
+        std::exit(1);
+    } break;
+    }
+}
+
+bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body)
+{
+    for (Token& op : program) {
+        if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == startType) continue;
+        if (op.type == endType && op.enabled) {
+            op.enabled = false;
+            return true;
+            break;
+        }
+        op.enabled = false;
+        body.push_back(op);
+    }
+    return false;
+}
+
+void Lexer::lexLine(std::string line)
+{       
+    unsigned int col = chopWord(line, 0);
+    unsigned int colEnd = 0;
+
+    if (line.find("#") != std::string::npos) {
+        line = line.substr(0, line.find("#"));
+    }
+
+    while (col < line.length()) {
+        colEnd = stripByCol(line, col);
+        if (line.substr(col, colEnd).find(" ") != std::string::npos) { // TODO: make it better
+            auto list = split(line.substr(col, colEnd), "\\s");
+            std::string text = list.front();
+
+            createToken(text, col);
+        } else {
+            std::string text = line.substr(col, colEnd);
+
+            createToken(text, col);
+        }
+        col = chopWord(line, colEnd);
+    }
+
+    lineCount++;
+}
+
+void Lexer::createToken(std::string text, unsigned int col)
+{
+    Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
+
+    if (token.type == UNDEFINED) {
+        makeError(token, "Unexpected token `" + token.text + "`");
+        std::exit(1);
+    }
+
+    if (token.type == STRING) {
+        processStringLiteral(token);
+    }
+
+    this->program.push_back(token);
 }

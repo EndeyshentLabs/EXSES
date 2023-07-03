@@ -32,6 +32,10 @@ private:
     void makeError(Token token, std::string text);
     std::string tokenLocation(Token token);
     void processStringLiteral(Token& token);
+    void processToken(Token& token, bool inside);
+    bool processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body);
+    void lexLine(std::string line);
+    void createToken(std::string text, unsigned int col);
 };
 
 template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
