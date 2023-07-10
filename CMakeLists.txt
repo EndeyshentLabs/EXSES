@@ -27,10 +27,16 @@ target_compile_options(exsi PRIVATE
     -Wextra
     -pedantic
     -Werror=switch
-    -fdiagnostics-color
+    -fdiagnostics-color=always
     $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3 -DDEBUG>
     $<$<CONFIG:RELEASE>:-O3>
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+target_compile_options(exsi PRIVATE
+    -fcolor-diagnostics
+)
+endif()
 
 target_link_options(exsi PRIVATE
     $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3>
