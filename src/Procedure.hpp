@@ -5,14 +5,14 @@
 
 #include <Token.hpp>
 
-class Procedure
-{
+class Procedure {
 public:
     Procedure(int line, int col, std::string name, std::vector<Token> body);
     unsigned int line;
     unsigned int col;
     std::string name;
     std::vector<Token> getBody() { return body; }
+
 private:
     std::vector<Token> body;
 };

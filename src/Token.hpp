@@ -5,8 +5,7 @@
 
 #include <Value.hpp>
 
-enum TokenType
-{
+enum TokenType {
     UNDEFINED = -1,
     PUSH = 0,
     STRING,
@@ -45,8 +44,7 @@ enum TokenType
 
 extern std::string TokenTypeString[];
 
-struct Token
-{
+struct Token {
     unsigned int line;
     unsigned int col;
     TokenType type;

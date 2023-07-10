@@ -5,15 +5,14 @@
 #include <string>
 #include <vector>
 
-#include <Token.hpp>
 #include <Procedure.hpp>
+#include <Token.hpp>
 
 enum Target {
     EXSI
 };
 
-class Lexer
-{
+class Lexer {
 public:
     Lexer(std::string fileName, Target target);
     Target target;
@@ -21,6 +20,7 @@ public:
     void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});
     void compileToPython3();
     void run();
+
 private:
     std::string source;
     std::string fileName;
@@ -38,7 +38,7 @@ private:
     void createToken(std::string text, unsigned int col);
 };
 
-template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
+template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
 void printTokenLineInfo(T token);
 
 #endif /* EXSES_LEXER_H */

@@ -2,25 +2,27 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstdlib>
 
-#include <utils.hpp>
-#include <Token.hpp>
 #include <Procedure.hpp>
+#include <Token.hpp>
 #include <Value.hpp>
+#include <utils.hpp>
 
-#define makeNote(tokenLike, text) \
-    do { \
+#define makeNote(tokenLike, text)                                                                                                                                    \
+    do {                                                                                                                                                             \
         std::cout << fileName + ":" + std::to_string((tokenLike).line + 1) + ":" + std::to_string((tokenLike).col + 1) << ": \033[32mNOTE\033[0m: " << text << '\n'; \
     } while (0)
 
 std::vector<std::string> lines;
 
-Lexer::Lexer(std::string fileName, Target target) : target(target), fileName(fileName)
+Lexer::Lexer(std::string fileName, Target target)
+    : target(target)
+    , fileName(fileName)
 {
     std::ifstream sourceFile;
     sourceFile.open(this->fileName, std::ios::in);
@@ -73,7 +75,9 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
     }
 
     for (Token token : (inside ? procBody : this->program)) {
-        if (!token.enabled && !inside) { continue; }
+        if (!token.enabled && !inside) {
+            continue;
+        }
         processToken(token, inside);
     }
 }
@@ -81,12 +85,12 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 void Lexer::run()
 {
     this->tokenize();
-#   if defined(DEBUG)
+#if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
         std::printf("%s: type: %s, text: `%s`\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
     }
-#   endif
+#endif
     if (this->target == EXSI) {
         this->intrepret();
     } else {
@@ -99,29 +103,29 @@ TokenType Lexer::makeType(std::string text)
 {
     if (isInteger(text)) {
         return PUSH;
-    } else if (text == "[+]")  {
+    } else if (text == "[+]") {
         return STRING_PLUS;
     } else if (std::regex_match(text, std::regex("\\[.*\\]"))) {
         return STRING;
-    } else if (text == "+")  {
+    } else if (text == "+") {
         return PLUS;
-    } else if (text == "-")  {
+    } else if (text == "-") {
         return MINUS;
-    } else if (text == "*")  {
+    } else if (text == "*") {
         return MULT;
-    } else if (text == "/")  {
+    } else if (text == "/") {
         return DIV;
-    } else if (text == "&")  {
+    } else if (text == "&") {
         return DUP;
-    } else if (text == "$&")  {
+    } else if (text == "$&") {
         return OVER;
-    } else if (text == "_")  {
+    } else if (text == "_") {
         return DROP;
-    } else if (text == "$")  {
+    } else if (text == "$") {
         return SWAP;
-    } else if (text == "!")  {
+    } else if (text == "!") {
         return DUMP;
-    } else if (text == "@")  {
+    } else if (text == "@") {
         return INPUT;
     } else if (text == "<-") {
         return BIND;
@@ -179,9 +183,10 @@ std::string Lexer::tokenLocation(Token token)
     return fileName + ":" + std::to_string(token.line + 1) + ":" + std::to_string(token.col + 1);
 }
 
-template<typename T> // This trick is needed for compatibility with both Token and Procedure classes
-void printTokenLineInfo(T token) {
-    std::printf("%d | %s\n", token.line+1, lines[token.line].c_str());
+template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
+void printTokenLineInfo(T token)
+{
+    std::printf("%d | %s\n", token.line + 1, lines[token.line].c_str());
     for (unsigned int i = 0; i < std::to_string(token.line).length(); i++) {
         std::cout << " ";
     }
@@ -201,22 +206,22 @@ void Lexer::processStringLiteral(Token& token)
             if (c == '\\') {
                 Token escapePosTok(token.line, token.col + pos + 1, token.type, token.value.text, Value(ValueType::STRING, token.value.text));
                 switch (token.value.text[pos + 1]) {
-                    case 'n': {
-                        token.value.text.replace(pos, 2, "\n");
-                    } break;
-                    case 'r': {
-                        token.value.text.replace(pos, 2, "\r");
-                    } break;
-                    case 's': {
-                        token.value.text.replace(pos, 2, " ");
-                    } break;
-                    case '+': {
-                        token.value.text.replace(pos, 2, "+");
-                    } break;
-                    default: {
-                        makeError(escapePosTok, "Incomplete escape sequence");
-                        std::exit(1);
-                    }
+                case 'n': {
+                    token.value.text.replace(pos, 2, "\n");
+                } break;
+                case 'r': {
+                    token.value.text.replace(pos, 2, "\r");
+                } break;
+                case 's': {
+                    token.value.text.replace(pos, 2, " ");
+                } break;
+                case '+': {
+                    token.value.text.replace(pos, 2, "+");
+                } break;
+                default: {
+                    makeError(escapePosTok, "Incomplete escape sequence");
+                    std::exit(1);
+                }
                 }
             }
             pos++;
@@ -508,7 +513,8 @@ void Lexer::processToken(Token& token, bool inside)
         }
     } break;
     case IF: {
-        if (inside) break;
+        if (inside)
+            break;
         if (stack.size() < 1) {
             makeError(token, "Not enough elements on the stack! Expected condition.");
             std::exit(1);
@@ -711,7 +717,8 @@ void Lexer::processToken(Token& token, bool inside)
 bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body)
 {
     for (Token& op : program) {
-        if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == startType) continue;
+        if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == startType)
+            continue;
         if (op.type == endType && op.enabled) {
             op.enabled = false;
             return true;
@@ -724,7 +731,7 @@ bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, 
 }
 
 void Lexer::lexLine(std::string line)
-{       
+{
     unsigned int col = chopWord(line, 0);
     unsigned int colEnd = 0;
 
