@@ -9,6 +9,15 @@ enum class ValueType {
 };
 
 struct Value {
+    Value(const Value&) = default;
+    Value(Value&&) = default;
+    Value& operator=(const Value&) = default;
+    Value& operator=(Value&&) = default;
+    Value(ValueType type, std::string text)
+        : type(type)
+        , text(std::move(text))
+    {
+    }
     ValueType type;
     std::string text;
     bool operator==(Value& other);

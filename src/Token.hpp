@@ -45,6 +45,18 @@ enum TokenType {
 extern std::string TokenTypeString[];
 
 struct Token {
+    Token(const Token&) = default;
+    Token(Token&&) = default;
+    Token& operator=(const Token&) = delete;
+    Token& operator=(Token&&) = delete;
+    Token(unsigned int line, unsigned int col, TokenType type, std::string text, Value value)
+        : line(line)
+        , col(col)
+        , type(type)
+        , text(std::move(text))
+        , value(std::move(value))
+    {
+    }
     unsigned int line;
     unsigned int col;
     TokenType type;

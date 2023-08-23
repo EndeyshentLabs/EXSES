@@ -187,7 +187,7 @@ template <typename T> // This trick is needed for compatibility with both Token 
 void printTokenLineInfo(T token)
 {
     std::printf("%d | %s\n", token.line + 1, lines[token.line].c_str());
-    for (unsigned int i = 0; i < std::to_string(token.line).length(); i++) {
+    for (unsigned int i = 0; i < std::to_string(token.line).length() + 1; i++) {
         std::cout << " ";
     }
     std::cout << " | \033[31m";
@@ -395,7 +395,11 @@ void Lexer::processToken(Token& token, bool inside)
             std::exit(1);
         }
 
+#if 0
         storage[name] = value;
+#else
+        storage.insert_or_assign(name, value);
+#endif
     } break;
     case SAVE: {
         if (stack.size() < 2) {
@@ -413,7 +417,11 @@ void Lexer::processToken(Token& token, bool inside)
             std::exit(1);
         }
 
+#if 0
         storage[name] = value;
+#else
+        storage.insert_or_assign(name, value);
+#endif
     } break;
     case LOAD: {
         std::string name = stack.back().text;
@@ -424,7 +432,7 @@ void Lexer::processToken(Token& token, bool inside)
             std::exit(1);
         }
 
-        stack.push_back(Value(storage[name].type, storage[name].text));
+        stack.push_back(Value(storage.at(name).type, storage.at(name).text));
     } break;
     case TERNARY: {
         if (stack.size() < 3) {
