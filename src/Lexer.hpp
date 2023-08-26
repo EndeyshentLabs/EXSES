@@ -18,7 +18,6 @@ public:
     Target target;
     void tokenize();
     void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});
-    void compileToPython3();
     void run();
 
 private:

@@ -16,7 +16,6 @@ void usage(char** argv)
     std::cout << "Usage: " << argv[0] << " <file>\n";
     // std::cout << "Modes:\n";
     // std::cout << "    exsi    - native EXSES intrepreter.\n";
-    // std::cout << "    python3 - compile EXSES code to Python 3.\n";
 }
 
 int main(int argc, char** argv)
