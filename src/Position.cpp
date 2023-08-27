@@ -4,5 +4,5 @@
 
 std::string Position::toString()
 {
-    return std::format("%u:%u", this->line, this->col);
+    return std::format("{}:{}", this->line + 1, this->col + 1);
 }

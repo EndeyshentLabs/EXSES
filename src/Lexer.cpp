@@ -34,8 +34,11 @@ Lexer::Lexer(std::string fileName, Target target)
         }
         sourceFile.close();
     } else {
-        std::cerr << "ERROR: Couldn't open a file '" << this->fileName << "'!\n";
+        std::cerr << "ERROR: Couldn't open file '" << this->fileName << "'!\n";
+        std::exit(1);
     }
+
+    this->curChar = this->source[0];
 
     this->run();
 }
@@ -47,6 +50,10 @@ void Lexer::advance()
     this->curChar = this->source.at(this->cursor);
     if (this->curChar == '\n') {
         this->cursor++;
+        if (this->source[cursor] == 0) { // NOTE: Unsafe
+            this->curChar = 0;
+            return;
+        }
         this->pos.line++;
         this->pos.col = 0;
         this->curChar = this->source.at(this->cursor);
@@ -193,8 +200,14 @@ void Lexer::lexSource()
                 printf("lor\n");
                 std::exit(55);
             }
+        } else if (this->curChar == '#') {
+            Position savedPos(this->pos);
+
+            while (this->curChar != 0 && this->pos.line == savedPos.line) {
+                this->advance();
+            }
         } else {
-            std::printf("%s:%s: ERROR: Unknown token, starts with `%c`", this->fileName.c_str(), this->pos.toString().c_str(), this->curChar);
+            std::printf("%s:%s: ERROR: Unknown token, starts with `%c`\n", this->fileName.c_str(), this->pos.toString().c_str(), this->curChar);
             std::exit(1);
         }
     }
@@ -218,6 +231,8 @@ Token Lexer::makeString()
 {
     std::string buf;
     Position startPos(this->pos);
+
+    this->advance();
 
     while (this->curChar != ']' && this->curChar != 0) {
         buf.push_back(this->curChar);
