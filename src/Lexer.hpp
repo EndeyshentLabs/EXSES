@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include <Position.hpp>
 #include <Procedure.hpp>
 #include <Token.hpp>
 
@@ -16,7 +17,7 @@ class Lexer {
 public:
     Lexer(std::string fileName, Target target);
     Target target;
-    void tokenize();
+    void lexSource();
     void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});
     void run();
 
@@ -25,15 +26,23 @@ private:
     std::string fileName;
     std::vector<Token> program;
     std::vector<Value> stack;
+    char curChar = source[0];
+    Position pos;
+    unsigned int cursor;
+
+    void advance();
+
+    Token makeNumber();
+
     std::map<std::string, Value> storage;
     std::vector<Procedure> procedureStorage;
+
     TokenType makeType(std::string text);
     void makeError(Token token, std::string text);
     std::string tokenLocation(Token token);
     void processStringLiteral(Token& token);
     void processToken(Token& token, bool inside);
     bool processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body);
-    void lexLine(std::string line);
     void createToken(std::string text, unsigned int col);
 };
 

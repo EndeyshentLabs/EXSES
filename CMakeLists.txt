@@ -18,6 +18,7 @@ add_executable(
     src/Procedure.cpp
     src/Token.cpp
     src/Value.cpp
+    src/Position.cpp
 )
 
 target_include_directories(exsi PUBLIC src)

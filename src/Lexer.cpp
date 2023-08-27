@@ -40,31 +40,178 @@ Lexer::Lexer(std::string fileName, Target target)
     this->run();
 }
 
-int stripByCol(std::string line, unsigned int col)
+void Lexer::advance()
 {
-    while (col < line.length() && !std::isspace(line[col])) {
-        col++;
+    this->cursor++;
+    this->pos.col++;
+    this->curChar = this->source.at(this->cursor);
+    if (this->curChar == '\n') {
+        this->cursor++;
+        this->pos.line++;
+        this->pos.col = 0;
+        this->curChar = this->source.at(this->cursor);
     }
-    return col;
 }
 
-int chopWord(std::string line, unsigned int col)
+void Lexer::lexSource()
 {
-    while (col < line.length() && std::isspace(line[col])) {
-        col++;
+    while (this->curChar != 0) {
+        if (std::isspace(this->curChar)) {
+            this->advance();
+        } else if (std::isdigit(this->curChar)) {
+            Token tok = this->makeNumber();
+            this->program.push_back(tok);
+            this->advance();
+        } else if (this->curChar == '[') {
+            while (this->curChar != ']' && this->curChar != 0) {
+                this->advance();
+            }
+        } else if (this->curChar == '+') {
+            Position startPos(this->pos);
+            TokenType type = PLUS;
+            this->advance();
+            if (this->curChar == '+') {
+                type = STRING_PLUS;
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, type == STRING_PLUS ? "++" : "+", Value(ValueType::NONE, "")));
+        } else if (this->curChar == '-') {
+            this->program.push_back(Token(this->pos, MINUS, "-", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '*') {
+            this->program.push_back(Token(this->pos, MULT, "*", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '/') {
+            this->program.push_back(Token(this->pos, DIV, "/", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '&') {
+            Position startPos(this->pos);
+            TokenType type = DUP;
+            this->advance();
+            if (this->curChar == '&') {
+                type = LAND;
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, type == LAND ? "&&" : "&", Value(ValueType::NONE, "")));
+        } else if (this->curChar == '$') {
+            Position startPos(this->pos);
+            TokenType type = SWAP;
+            this->advance();
+            if (this->curChar == '&') {
+                type = OVER;
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, type == OVER ? "$&" : "$", Value(ValueType::NONE, "")));
+        } else if (this->curChar == '_') {
+            this->program.push_back(Token(this->pos, DROP, "_", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '!') {
+            Position startPos(this->pos);
+            TokenType type = DUMP;
+            this->advance();
+            if (this->curChar == '!') {
+                type = LNOT;
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, type == LNOT ? "!!" : "!", Value(ValueType::NONE, "")));
+        } else if (this->curChar == '@') {
+            this->program.push_back(Token(this->pos, INPUT, "@", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '=') {
+            this->program.push_back(Token(this->pos, EQUAL, "=", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '<') {
+            Position startPos(this->pos);
+            TokenType type = LESS;
+            std::string text = "<";
+            this->advance();
+            if (this->curChar == '-') {
+                type = BIND;
+                text = "<-";
+                this->advance();
+            } else if (this->curChar == '!') {
+                type = SAVE;
+                text = "<!";
+                this->advance();
+            } else if (this->curChar == '=') {
+                type = LESSEQUAL;
+                text = "<=";
+                this->advance();
+            } else if (this->curChar == '>') {
+                type = NOTEQUAL;
+                text = "<>";
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, text, Value(ValueType::NONE, "")));
+        } else if (this->curChar == '>') {
+            Position startPos(this->pos);
+            TokenType type = GREATER;
+            this->advance();
+            if (this->curChar == '=') {
+                type = GREATEREQUAL;
+                this->advance();
+            }
+            this->program.push_back(Token(startPos, type, type == GREATEREQUAL ? ">=" : ">", Value(ValueType::NONE, "")));
+        } else if (this->curChar == '^') {
+            this->program.push_back(Token(this->pos, LOAD, "^", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '(') {
+            this->program.push_back(Token(this->pos, IF, "(", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == ')') {
+            this->program.push_back(Token(this->pos, ENDIF, ")", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '?') {
+            Position startPos(this->pos);
+            this->advance();
+            if (this->curChar == ':') {
+                this->program.push_back(Token(startPos, TERNARY, "?:", Value(ValueType::NONE, "")));
+                this->advance();
+            } else {
+                printf("ternary\n");
+                std::exit(55);
+            }
+        } else if (this->curChar == ')') {
+            this->program.push_back(Token(this->pos, ENDIF, ")", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '\'') {
+            this->program.push_back(Token(this->pos, MAKEPROC, "'", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '"') {
+            this->program.push_back(Token(this->pos, MAKEPROC, "\"", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == ':') {
+            this->program.push_back(Token(this->pos, INVOKEPROC, ":", Value(ValueType::NONE, "")));
+            this->advance();
+        } else if (this->curChar == '|') {
+            Position startPos(this->pos);
+            this->advance();
+            if (this->curChar == '|') {
+                this->program.push_back(Token(startPos, LOR, "||", Value(ValueType::NONE, "")));
+                this->advance();
+            } else {
+                printf("lor\n");
+                std::exit(55);
+            }
+        } else {
+            std::printf("%s:%s: ERROR: Unknown token, starts with `%c`", this->fileName.c_str(), this->pos.toString().c_str(), this->curChar);
+            std::exit(1);
+        }
     }
-    return col;
 }
 
-unsigned int lineCount = 0;
-
-void Lexer::tokenize()
+Token Lexer::makeNumber()
 {
-    lines = split(source, "\\n");
+    std::string buf;
 
-    for (std::string line : lines) {
-        lexLine(line);
+    Position startPos(this->pos);
+
+    while (this->curChar != 0 && std::isdigit(this->curChar)) {
+        buf.push_back(this->curChar);
+        this->advance();
     }
+
+    return Token(startPos, PUSH, buf, Value(ValueType::INT, buf));
 }
 
 void Lexer::intrepret(bool inside, std::vector<Token> procBody)
@@ -84,7 +231,7 @@ void Lexer::intrepret(bool inside, std::vector<Token> procBody)
 
 void Lexer::run()
 {
-    this->tokenize();
+    this->lexSource();
 #if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
@@ -180,18 +327,18 @@ void Lexer::makeError(Token token, std::string text)
 
 std::string Lexer::tokenLocation(Token token)
 {
-    return fileName + ":" + std::to_string(token.line + 1) + ":" + std::to_string(token.col + 1);
+    return fileName + ":" + std::to_string(token.pos.line + 1) + ":" + std::to_string(token.pos.col + 1);
 }
 
 template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
 void printTokenLineInfo(T token)
 {
-    std::printf("%d | %s\n", token.line + 1, lines[token.line].c_str());
-    for (unsigned int i = 0; i < std::to_string(token.line).length() + 1; i++) {
+    std::printf("%d | %s\n", token.pos.line + 1, lines[token.pos.line].c_str());
+    for (unsigned int i = 0; i < std::to_string(token.pos.line).length() + 1; i++) {
         std::cout << " ";
     }
     std::cout << " | \033[31m";
-    for (unsigned int i = 0; i < token.col; i++) {
+    for (unsigned int i = 0; i < token.pos.col; i++) {
         std::cout << " ";
     }
     std::cout << "^\033[0m\n";
@@ -204,7 +351,7 @@ void Lexer::processStringLiteral(Token& token)
         unsigned int pos = 0;
         for (auto c : token.value.text) {
             if (c == '\\') {
-                Token escapePosTok(token.line, token.col + pos + 1, token.type, token.value.text, Value(ValueType::STRING, token.value.text));
+                Token escapePosTok(Position(token.pos.line, token.pos.col + pos + 1), token.type, token.value.text, Value(ValueType::STRING, token.value.text));
                 switch (token.value.text[pos + 1]) {
                 case 'n': {
                     token.value.text.replace(pos, 2, "\n");
@@ -487,7 +634,7 @@ void Lexer::processToken(Token& token, bool inside)
             std::exit(1);
         }
 
-        Procedure proc(token.line, token.col, name, body);
+        Procedure proc(token.pos.line, token.pos.col, name, body);
         procedureStorage.push_back(proc);
     } break;
     case ENDPROC: {
@@ -725,7 +872,7 @@ void Lexer::processToken(Token& token, bool inside)
 bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body)
 {
     for (Token& op : program) {
-        if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == startType)
+        if (op.pos.line < token.pos.line || (op.pos.line == token.pos.line && op.pos.col < token.pos.col) || op.type == startType)
             continue;
         if (op.type == endType && op.enabled) {
             op.enabled = false;
@@ -738,36 +885,9 @@ bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, 
     return false;
 }
 
-void Lexer::lexLine(std::string line)
-{
-    unsigned int col = chopWord(line, 0);
-    unsigned int colEnd = 0;
-
-    if (line.find("#") != std::string::npos) {
-        line = line.substr(0, line.find("#"));
-    }
-
-    while (col < line.length()) {
-        colEnd = stripByCol(line, col);
-        if (line.substr(col, colEnd).find(" ") != std::string::npos) { // TODO: make it better
-            auto list = split(line.substr(col, colEnd), "\\s");
-            std::string text = list.front();
-
-            createToken(text, col);
-        } else {
-            std::string text = line.substr(col, colEnd);
-
-            createToken(text, col);
-        }
-        col = chopWord(line, colEnd);
-    }
-
-    lineCount++;
-}
-
 void Lexer::createToken(std::string text, unsigned int col)
 {
-    Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
+    Token token(Position(228, col), makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
 
     if (token.type == UNDEFINED) {
         makeError(token, "Unexpected token `" + token.text + "`");
