@@ -10,7 +10,12 @@
 #include <Token.hpp>
 
 enum Target {
-    EXSI
+    EXSI,
+    NASM_LINUX_X86_64,
+    NASM_WIN32, // NOTE: Not supported
+#ifdef SUPPORT_LLVM
+    LLVM, // NOTE: Not supported
+#endif
 };
 
 class Lexer {

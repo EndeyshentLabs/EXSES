@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <Parser.hpp>
 #include <Procedure.hpp>
 #include <Token.hpp>
 #include <Value.hpp>
@@ -252,6 +253,8 @@ void Lexer::run()
         std::printf("%s:%s: type: %s, text: `%s`\n", this->fileName.c_str(), token.pos.toString().c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
     }
 #endif
+
+    Parser parser(this->target, this->fileName, this->program);
 
     // if (this->target == EXSI) {
     //     this->intrepret();

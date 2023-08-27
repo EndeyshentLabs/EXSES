@@ -19,6 +19,7 @@ add_executable(
     src/Token.cpp
     src/Value.cpp
     src/Position.cpp
+    src/Parser.cpp
 )
 
 target_include_directories(exsi PUBLIC src)
