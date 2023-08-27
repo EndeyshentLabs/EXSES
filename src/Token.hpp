@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include <Value.hpp>
 #include <Position.hpp>
+#include <Value.hpp>
 
 enum TokenType {
     UNDEFINED = -1,
