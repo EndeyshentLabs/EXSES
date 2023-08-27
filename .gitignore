@@ -2,3 +2,5 @@
 [Bb]uild/
 release/
 debug/
+*.o
+*.asm
