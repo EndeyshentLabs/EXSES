@@ -61,7 +61,8 @@ struct Token {
     TokenType type;
     const std::string text;
     Value value;
-    bool enabled = true;
+    // Only for blocks
+    unsigned int pairIp = 0;
 };
 
 #endif /* EXSES_TOKEN_H */

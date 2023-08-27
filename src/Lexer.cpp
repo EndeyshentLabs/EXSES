@@ -246,11 +246,12 @@ Token Lexer::makeString()
 void Lexer::run()
 {
     this->lexSource();
+    this->linkBlocks();
 
 #if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
-        std::printf("%s:%s: type: %s, text: `%s`\n", this->fileName.c_str(), token.pos.toString().c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
+        std::printf("%s:%s: type: %s, text: `%s`, pairIp: %u\n", this->fileName.c_str(), token.pos.toString().c_str(), TokenTypeString[token.type].c_str(), token.text.c_str(), token.pairIp);
     }
 #endif
 
@@ -262,4 +263,47 @@ void Lexer::run()
     //     std::cerr << "Only EXSI target is supported right now!\n";
     //     std::exit(1);
     // }
+}
+
+enum class BlockType {
+    IF,
+    ENDIF
+};
+
+struct Block {
+    Block(BlockType type, unsigned int ip)
+        : type(type)
+        , ip(ip)
+    {
+    }
+    BlockType type;
+    unsigned int ip;
+};
+
+std::vector<Block> blockStack;
+
+void Lexer::linkBlocks()
+{
+    for (unsigned int ip = 0; ip < program.size(); ip++) {
+        Token& token = program[ip];
+        if (token.type == IF) {
+            blockStack.push_back(Block(BlockType::IF, ip));
+        } else if (token.type == ENDIF) {
+            if (blockStack.size() < 1) {
+                std::printf("%s:%s: ERROR: `ENDIF` without `IF`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+            Block block = blockStack.back();
+            blockStack.pop_back();
+
+            if (block.type != BlockType::IF) {
+                std::printf("%s:%s: ERROR: `ENDIF` can only close `IF` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            token.pairIp = block.ip;
+
+            program[block.ip].pairIp = ip;
+        }
+    }
 }

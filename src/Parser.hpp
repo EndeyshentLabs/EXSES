@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include <Token.hpp>
 #include <Lexer.hpp>
+#include <Token.hpp>
 
 class Parser {
 public:

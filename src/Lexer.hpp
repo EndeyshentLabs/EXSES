@@ -39,6 +39,8 @@ private:
 
     Token makeNumber();
     Token makeString();
+
+    void linkBlocks();
 };
 
 template <typename T> // This trick is needed for compatibility with both Token and Procedure classes

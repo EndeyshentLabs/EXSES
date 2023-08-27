@@ -1,11 +1,13 @@
 #include <Parser.hpp>
 
 #include <Lexer.hpp>
+#include <Token.hpp>
 
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <vector>
 
 #define CMD(command)                                   \
     do {                                               \
@@ -144,10 +146,13 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
         } break;
         case IF: {
-            output.append(std::format("addr_{}: ;; {}: IF\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: IF (to {})\n", ip, token.pos.toString(), token.pairIp));
+            output.append("    pop rax\n");
+            output.append("    test rax, rax\n");
+            output.append(std::format("    jz addr_{}\n", token.pairIp));
         } break;
         case ENDIF: {
-            output.append(std::format("addr_{}: ;; {}: ENDIF\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: ENDIF (from {})\n", ip, token.pos.toString(), token.pairIp));
         } break;
         case EQUAL: {
             output.append(std::format("addr_{}: ;; {}: EQUAL\n", ip, token.pos.toString()));
@@ -173,8 +178,8 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: LESS\n", ip, token.pos.toString()));
             output.append("    mov rcx, 0\n");
             output.append("    mov rdx, 1\n");
-            output.append("    pop rax\n");
             output.append("    pop rbx\n");
+            output.append("    pop rax\n");
             output.append("    cmp rax, rbx\n");
             output.append("    cmovl rcx, rdx\n");
             output.append("    push rcx\n");
@@ -183,8 +188,8 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: LESSEQUAL\n", ip, token.pos.toString()));
             output.append("    mov rcx, 0\n");
             output.append("    mov rdx, 1\n");
-            output.append("    pop rax\n");
             output.append("    pop rbx\n");
+            output.append("    pop rax\n");
             output.append("    cmp rax, rbx\n");
             output.append("    cmovle rcx, rdx\n");
             output.append("    push rcx\n");
@@ -193,8 +198,8 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: GREATER\n", ip, token.pos.toString()));
             output.append("    mov rcx, 0\n");
             output.append("    mov rdx, 1\n");
-            output.append("    pop rax\n");
             output.append("    pop rbx\n");
+            output.append("    pop rax\n");
             output.append("    cmp rax, rbx\n");
             output.append("    cmovg rcx, rdx\n");
             output.append("    push rcx\n");
@@ -203,8 +208,8 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: GREATEREQUAL\n", ip, token.pos.toString()));
             output.append("    mov rcx, 0\n");
             output.append("    mov rdx, 1\n");
-            output.append("    pop rax\n");
             output.append("    pop rbx\n");
+            output.append("    pop rax\n");
             output.append("    cmp rax, rbx\n");
             output.append("    cmovge rcx, rdx\n");
             output.append("    push rcx\n");
