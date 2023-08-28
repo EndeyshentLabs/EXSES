@@ -151,13 +151,19 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
         } break;
         case MAKEPROC: {
-            output.append(std::format("addr_{}: ;; {}: MAKEPROC\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: MAKEPROC (to {})\n", ip, token.pos.toString(), token.pairIp));
+            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case ENDPROC: {
             output.append(std::format("addr_{}: ;; {}: ENDPROC\n", ip, token.pos.toString()));
+            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case INVOKEPROC: {
             output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
+            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case IF: {
             output.append(std::format("addr_{}: ;; {}: IF (to {})\n", ip, token.pos.toString(), token.pairIp));
