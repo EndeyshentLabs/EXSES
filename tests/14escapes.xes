@@ -2,7 +2,7 @@
 # output: It
 # output: Works!
 # output: +
-[Endeyshent\sLaboratories] !
-[It\nWorks!] !
-[\+] !
-# [Secret\rNothing?] ! # NOTE: Broken
+[Endeyshent\sLaboratories] s!
+[It\nWorks!] s!
+[+] s!
+# [Secret\rNothing?] s! # NOTE: Broken
