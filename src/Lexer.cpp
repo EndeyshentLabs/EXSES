@@ -271,7 +271,9 @@ void Lexer::run()
 
 enum class BlockType {
     IF,
-    ENDIF
+    ENDIF,
+    PROC,
+    ENDPROC
 };
 
 struct Block {
@@ -290,6 +292,7 @@ void Lexer::linkBlocks()
 {
     for (unsigned int ip = 0; ip < program.size(); ip++) {
         Token& token = program[ip];
+
         if (token.type == IF) {
             blockStack.push_back(Block(BlockType::IF, ip));
         } else if (token.type == ENDIF) {
@@ -297,11 +300,31 @@ void Lexer::linkBlocks()
                 std::printf("%s:%s: ERROR: `ENDIF` without `IF`\n", this->fileName.c_str(), token.pos.toString().c_str());
                 std::exit(1);
             }
+
             Block block = blockStack.back();
             blockStack.pop_back();
 
             if (block.type != BlockType::IF) {
                 std::printf("%s:%s: ERROR: `ENDIF` can only close `IF` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            token.pairIp = block.ip;
+
+            program[block.ip].pairIp = ip;
+        } else if (token.type == MAKEPROC) {
+            blockStack.push_back(Block(BlockType::PROC, ip));
+        } else if (token.type == ENDPROC) {
+            if (blockStack.size() < 1) {
+                std::printf("%s:%s: ERROR: `ENDPROC` without `MAKEPROC`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            Block block = blockStack.back();
+            blockStack.pop_back();
+
+            if (block.type != BlockType::PROC) {
+                std::printf("%s:%s: ERROR: `ENDPROC` can only close procedure body!\n", this->fileName.c_str(), token.pos.toString().c_str());
                 std::exit(1);
             }
 
