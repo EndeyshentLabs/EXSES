@@ -80,13 +80,8 @@ void Lexer::lexSource()
             this->advance();
         } else if (this->curChar == '+') {
             Position startPos(this->pos);
-            TokenType type = PLUS;
+            this->program.push_back(Token(startPos, PLUS, "+", Value(ValueType::NONE, "")));
             this->advance();
-            if (this->curChar == '+') {
-                type = STRING_PLUS;
-                this->advance();
-            }
-            this->program.push_back(Token(startPos, type, type == STRING_PLUS ? "++" : "+", Value(ValueType::NONE, "")));
         } else if (this->curChar == '-') {
             this->program.push_back(Token(this->pos, MINUS, "-", Value(ValueType::NONE, "")));
             this->advance();
@@ -126,6 +121,31 @@ void Lexer::lexSource()
                 this->advance();
             }
             this->program.push_back(Token(startPos, type, type == LNOT ? "!!" : "!", Value(ValueType::NONE, "")));
+        } else if (this->curChar == 's') {
+            Position startPos(this->pos);
+            this->advance();
+            if (this->curChar == '!') {
+                this->program.push_back(Token(startPos, STRING_DUMP, "s!", Value(ValueType::NONE, "")));
+                this->advance();
+            }
+        } else if (this->curChar == 's') {
+            Position startPos(this->pos);
+            TokenType type = UNDEFINED;
+            this->advance();
+            if (this->curChar == '!') {
+                type = STRING_DUMP;
+                this->advance();
+            } else if (this->curChar == '+') {
+                type = STRING_PLUS;
+                this->advance();
+            }
+
+            if (type == UNDEFINED) {
+                std::printf("%s:%s: ERROR: Unknown token, starts with `s`\n", this->fileName.c_str(), this->pos.toString().c_str());
+                std::exit(1);
+            }
+
+            this->program.push_back(Token(startPos, type, type == STRING_DUMP ? "s!" : "s+", Value(ValueType::NONE, "")));
         } else if (this->curChar == '@') {
             this->program.push_back(Token(this->pos, INPUT, "@", Value(ValueType::NONE, "")));
             this->advance();

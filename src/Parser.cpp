@@ -49,6 +49,8 @@ void Parser::compileToNasmLinux86_64()
 
     std::cout << "INFO: Generating " << outputFilepath << '\n';
 
+    std::vector<std::string> stringStorage;
+
     for (; ip < this->program.size(); ip++) {
         Token token = this->program[ip];
 
@@ -58,10 +60,19 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("    push {}\n", token.value.text));
         } break;
         case STRING: {
-            std::cout << "Strings is not implemented in nasm-linux-x86_64!\n";
-            std::exit(1);
+            output.append(std::format("addr_{}: ;; {}: STRING {}\n", ip, token.pos.toString(), token.value.text));
+            output.append(std::format("    push str_{}\n", stringStorage.size()));
+            stringStorage.push_back(token.value.text);
+        } break;
+        case STRING_DUMP: {
+            output.append(std::format("addr_{}: ;; {}: STRING_DUMP\n", ip, token.pos.toString()));
+            output.append("    pop rsi\n");
+            output.append("    mov rdi, strPrintfFmt\n");
+            output.append("    xor eax, eax\n");
+            output.append("    call printf\n");
         } break;
         case STRING_PLUS: {
+            output.append(std::format("addr_{}: ;; {}: STRING_PLUS\n", ip, token.pos.toString()));
             std::cout << "Strings is not implemented in nasm-linux-x86_64!\n";
             std::exit(1);
         } break;
@@ -269,8 +280,18 @@ void Parser::compileToNasmLinux86_64()
 
     output.append("section .data\n");
     {
-        // TODO: Populate the .data
-        output.append("    numPrintfFmt: db '%u',0xA,0\n");
+        output.append("    numPrintfFmt: db '%d',0xA,0\n");
+        output.append("    strPrintfFmt: db '%s',0xA,0\n");
+        for (unsigned int i = 0; i < stringStorage.size(); i++) {
+            output.append(std::format("    str_{}: db ", i));
+            for (unsigned int j = 0; j < stringStorage[i].size(); j++) {
+                if (j > 0) {
+                    output.append(",");
+                }
+                output.append(std::format("{:d}", stringStorage[i][j]));
+            }
+            output.append(",0\n");
+        }
     }
     output.append("section .bss\n");
     {
