@@ -113,6 +113,12 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case DIV: {
             output.append(std::format("addr_{}: ;; {}: DIV\n", ip, token.pos.toString()));
+            output.append("    pop rbx\n");
+            output.append("    pop rax\n");
+            output.append("    xor rdx, rdx\n");
+            output.append("    div rbx\n");
+            output.append("    push rax\n");
+            output.append("    push rdx\n");
         } break;
         case DUMP: {
             output.append(std::format("addr_{}: ;; {}: DUMP\n", ip, token.pos.toString()));
