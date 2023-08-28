@@ -15,7 +15,6 @@ add_executable(
     src/main.cpp
     src/Lexer.cpp
     src/utils.cpp
-    src/Procedure.cpp
     src/Token.cpp
     src/Value.cpp
     src/Position.cpp

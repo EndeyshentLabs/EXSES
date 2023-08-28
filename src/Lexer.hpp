@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <Position.hpp>
-#include <Procedure.hpp>
 #include <Token.hpp>
 
 enum Target {
