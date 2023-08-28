@@ -134,12 +134,18 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case BIND: {
             output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
+            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case SAVE: {
             output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
+            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case LOAD: {
             output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
+            std::exit(1);
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
