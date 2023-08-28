@@ -47,6 +47,10 @@ Lexer::Lexer(std::string fileName, Target target)
 void Lexer::advance()
 {
     this->cursor++;
+    if (this->source[cursor] == 0) { // NOTE: Unsafe
+        this->curChar = 0;
+        return;
+    }
     this->pos.col++;
     this->curChar = this->source.at(this->cursor);
     if (this->curChar == '\n') {
