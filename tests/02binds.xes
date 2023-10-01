@@ -1,7 +1,8 @@
 # output: 420
-1100 500 <-
-1101 80 <-
+FiveOO qword <-
+EightO qword <-
 
-1100 ^
-1101 ^
-- !
+500 FiveOO <!
+80 EightO <!
+
+FiveOO ^ EightO ^ - !

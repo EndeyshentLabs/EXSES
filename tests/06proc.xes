@@ -10,7 +10,7 @@ Print ' ! "
 
 88 Print :
 
-Greet ' # name
+Greet '
     [Hello, ] s! s!
 "
 

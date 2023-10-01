@@ -2,9 +2,9 @@
 # input: Endeyshent
 # output: What's your name?
 # output: Hello, Endeyshent!
-[What's\syour\sname?] s!
+[What's your name?] s!
 
 @
-[Hello,\s] [+]
+[Hello, ] [+]
 [!] $ [+]
 s!
