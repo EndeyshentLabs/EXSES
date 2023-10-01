@@ -29,6 +29,7 @@ private:
     std::vector<Token> program;
 
     void compileToNasmLinux86_64();
+    void error(Token token, std::string msg);
 };
 
 #endif /* EXSES_PARSER_H */

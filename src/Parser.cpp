@@ -6,6 +6,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <regex>
 #include <vector>
 
@@ -14,6 +15,8 @@
         std::cout << "COMMAND: " << (command) << '\n'; \
         std::system((command).c_str());                \
     } while (0)
+
+std::map<std::string, unsigned int> procs;
 
 void Parser::parse()
 {
@@ -43,9 +46,12 @@ void Parser::compileToNasmLinux86_64()
     std::string outputFilepath(std::regex_replace(inputFileName, std::regex("\\.xes$"), ".asm"));
     std::string output("BITS 64\n"
                        "extern printf\n"
+                       "extern puts\n"
                        "global _start\n"
                        "section .text\n"
-                       "_start:\n");
+                       "_start:\n"
+                       "    mov rax, saved_rsp_end\n"
+                       "    mov [saved_rsp], rax\n");
 
     std::cout << "INFO: Generating " << outputFilepath << '\n';
 
@@ -57,7 +63,8 @@ void Parser::compileToNasmLinux86_64()
         switch (token.type) {
         case PUSH: {
             output.append(std::format("addr_{}: ;; {}: PUSH {}\n", ip, token.pos.toString(), std::stoi(token.value.text)));
-            output.append(std::format("    push {}\n", token.value.text));
+            output.append(std::format("    mov rax, {}\n", token.value.text));
+            output.append("    push rax\n");
         } break;
         case STRING: {
             output.append(std::format("addr_{}: ;; {}: STRING {}\n", ip, token.pos.toString(), token.value.text));
@@ -66,15 +73,13 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case STRING_DUMP: {
             output.append(std::format("addr_{}: ;; {}: STRING_DUMP\n", ip, token.pos.toString()));
-            output.append("    pop rsi\n");
-            output.append("    mov rdi, strPrintfFmt\n");
+            output.append("    pop rdi\n");
             output.append("    xor eax, eax\n");
-            output.append("    call printf\n");
+            output.append("    call puts\n");
         } break;
         case STRING_PLUS: {
             output.append(std::format("addr_{}: ;; {}: STRING_PLUS\n", ip, token.pos.toString()));
-            std::cout << "Strings is not implemented in nasm-linux-x86_64!\n";
-            std::exit(1);
+            error(token, "String-plus operation is not implemented in nasm-linux-x86_64!");
         } break;
         case DUP: {
             output.append(std::format("addr_{}: ;; {}: DUP\n", ip, token.pos.toString()));
@@ -140,41 +145,61 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case INPUT: {
             output.append(std::format("addr_{}: ;; {}: INPUT\n", ip, token.pos.toString()));
-            std::cout << "User input is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            error(token, "User input is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case BIND: {
             output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
-            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case SAVE: {
             output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
-            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case LOAD: {
             output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
-            std::cout << "Bindings is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
+            error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case MAKEPROC: {
+            Token& before = this->program[ip - 1];
+            if (before.type != IDENT) {
+                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
+            }
+            before.processedByParser = true;
+            procs.insert_or_assign(before.value.text, ip);
+            output.append(";; PRE-MAKEPROC\n");
+            output.append(std::format("    jmp addr_{}\n", token.pairIp));
             output.append(std::format("addr_{}: ;; {}: MAKEPROC (to {})\n", ip, token.pos.toString(), token.pairIp));
-            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            output.append("    sub rsp, 0\n");
+            output.append("    mov [saved_rsp], rsp\n");
+            output.append("    mov rsp, rax\n");
         } break;
         case ENDPROC: {
+            output.append(";; PRE-ENDPROC\n");
+            output.append("    mov rax, rsp\n");
+            output.append("    mov rsp, [saved_rsp]\n");
+            output.append("    add rsp, 0\n");
+            output.append("    ret\n");
             output.append(std::format("addr_{}: ;; {}: ENDPROC\n", ip, token.pos.toString()));
-            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
         } break;
         case INVOKEPROC: {
+            Token& before = this->program[ip - 1];
+            if (before.type != IDENT) {
+                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
+            }
+            if (!procs.contains(before.value.text)) {
+                error(token, std::format("Procedure '{}' is not defined", before.value.text));
+            }
+            before.processedByParser = true;
             output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
-            std::cout << "Procedures is not implemented in NASM_LINUX_X86_64 target!\n";
-            std::exit(1);
+            output.append("    mov rax, rsp\n");
+            output.append("    mov rsp, [saved_rsp]\n");
+            output.append(std::format("    call addr_{}\n", procs[before.value.text]));
+            output.append("    mov [saved_rsp], rsp\n");
+            output.append("    mov rsp, rax\n");
         } break;
         case IF: {
             output.append(std::format("addr_{}: ;; {}: IF (to {})\n", ip, token.pos.toString(), token.pairIp));
@@ -265,6 +290,12 @@ void Parser::compileToNasmLinux86_64()
             output.append("    not rax\n");
             output.append("    push rax\n");
         } break;
+        case IDENT: {
+            // TODO: Learn how to set `processedByParser` by reference
+            if (!token.processedByParser) {
+                // error(token, std::format("Unexpected IDENT '{}'", token.value.text));
+            }
+        } break;
         case UNDEFINED:
         case TRUE:
         case FALSE: {
@@ -281,7 +312,6 @@ void Parser::compileToNasmLinux86_64()
     output.append("section .data\n");
     {
         output.append("    numPrintfFmt: db '%d',0xA,0\n");
-        output.append("    strPrintfFmt: db '%s',0xA,0\n");
         for (unsigned int i = 0; i < stringStorage.size(); i++) {
             output.append(std::format("    str_{}: db ", i));
             for (unsigned int j = 0; j < stringStorage[i].size(); j++) {
@@ -295,6 +325,10 @@ void Parser::compileToNasmLinux86_64()
     }
     output.append("section .bss\n");
     {
+        // Inspired by https://gitlab.com/tsoding/porth
+        output.append("    saved_rsp: resq 1\n");
+        output.append("    saved_rsp_offset: resb 65536\n");
+        output.append("    saved_rsp_end:\n");
         // TODO: Populate the .bss
     }
 
@@ -311,6 +345,13 @@ void Parser::compileToNasmLinux86_64()
     }
 #endif
 
-    CMD(std::format("nasm -felf64 {}", outputFilepath));
+    // TODO: Should stop compilation if failed
+    CMD(std::format("nasm -g -felf64 {}", outputFilepath));
     CMD(std::format("ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o {} {} -lc", std::regex_replace(outputFilepath, std::regex("\\.asm$"), ""), std::regex_replace(outputFilepath, std::regex("\\.asm$"), ".o")));
+}
+
+void Parser::error(Token token, std::string msg)
+{
+    std::cout << std::format("{}:{}: ERROR: {}.\n", this->inputFileName, token.pos.toString(), msg);
+    std::exit(1);
 }

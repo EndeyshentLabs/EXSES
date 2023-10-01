@@ -1,5 +1,6 @@
 #include <Lexer.hpp>
 
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -73,6 +74,25 @@ void Lexer::lexSource()
             Token tok = this->makeNumber();
             this->program.push_back(tok);
             this->advance();
+        } else if (std::isalpha(this->curChar) || this->curChar == '_') {
+            std::string buf;
+
+            Position startPos(this->pos);
+
+            while (this->curChar != 0 && (std::isdigit(this->curChar) || std::isalpha(this->curChar) || this->curChar == '_' || this->curChar == '!' || this->curChar == '+') && !std::isspace(this->curChar)) {
+                buf.push_back(this->curChar);
+                this->advance();
+            }
+
+            if (buf == "s!") {
+                this->program.push_back(Token(startPos, STRING_DUMP, buf, Value(ValueType::NONE, "")));
+            } else if (buf == "s+") {
+                this->program.push_back(Token(startPos, STRING_PLUS, buf, Value(ValueType::NONE, "")));
+            } else if (buf == "_") {
+                this->program.push_back(Token(startPos, DROP, buf, Value(ValueType::NONE, "")));
+            } else {
+                this->program.push_back(Token(startPos, IDENT, buf, Value(ValueType::NONE, buf)));
+            }
         } else if (this->curChar == '[') {
             Token tok = this->makeString();
             this->program.push_back(tok);
@@ -120,13 +140,13 @@ void Lexer::lexSource()
                 this->advance();
             }
             this->program.push_back(Token(startPos, type, type == LNOT ? "!!" : "!", Value(ValueType::NONE, "")));
-        } else if (this->curChar == 's') {
-            Position startPos(this->pos);
-            this->advance();
-            if (this->curChar == '!') {
-                this->program.push_back(Token(startPos, STRING_DUMP, "s!", Value(ValueType::NONE, "")));
-                this->advance();
-            }
+            // } else if (this->curChar == 's') {
+            //     Position startPos(this->pos);
+            //     this->advance();
+            //     if (this->curChar == '!') {
+            //         this->program.push_back(Token(startPos, STRING_DUMP, "s!", Value(ValueType::NONE, "")));
+            //         this->advance();
+            //     }
         } else if (this->curChar == 's') {
             Position startPos(this->pos);
             TokenType type = UNDEFINED;
@@ -140,8 +160,7 @@ void Lexer::lexSource()
             }
 
             if (type == UNDEFINED) {
-                std::printf("%s:%s: ERROR: Unknown token, starts with `s`\n", this->fileName.c_str(), this->pos.toString().c_str());
-                std::exit(1);
+                goto UNEXP_CHAR;
             }
 
             this->program.push_back(Token(startPos, type, type == STRING_DUMP ? "s!" : "s+", Value(ValueType::NONE, "")));
@@ -209,7 +228,7 @@ void Lexer::lexSource()
             this->program.push_back(Token(this->pos, MAKEPROC, "'", Value(ValueType::NONE, "")));
             this->advance();
         } else if (this->curChar == '"') {
-            this->program.push_back(Token(this->pos, MAKEPROC, "\"", Value(ValueType::NONE, "")));
+            this->program.push_back(Token(this->pos, ENDPROC, "\"", Value(ValueType::NONE, "")));
             this->advance();
         } else if (this->curChar == ':') {
             this->program.push_back(Token(this->pos, INVOKEPROC, ":", Value(ValueType::NONE, "")));
@@ -231,6 +250,7 @@ void Lexer::lexSource()
                 this->advance();
             }
         } else {
+        UNEXP_CHAR: // Labels and gotos in 2023 KEKW
             std::printf("%s:%s: ERROR: Unknown token, starts with `%c`\n", this->fileName.c_str(), this->pos.toString().c_str(), this->curChar);
             std::exit(1);
         }
@@ -352,4 +372,20 @@ void Lexer::linkBlocks()
             program[block.ip].pairIp = ip;
         }
     }
+
+    bool fail = false;
+
+    for (Block& block : blockStack) {
+        std::string msg;
+        if (block.type == BlockType::IF || block.type == BlockType::PROC) {
+            msg = "Unclosed block";
+        } else {
+            msg = "Unexpected block closing.";
+        }
+        std::printf("%s:%s: ERROR: %s.\n", this->fileName.c_str(), this->program[block.ip].pos.toString().c_str(), msg.c_str());
+        fail = true;
+    }
+
+    if (fail)
+        std::exit(1);
 }

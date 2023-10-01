@@ -35,4 +35,6 @@ std::string TokenTypeString[] = {
     "LNOT",
     "TRUE",
     "FALSE",
+
+    "IDENT",
 };

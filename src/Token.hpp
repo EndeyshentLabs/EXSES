@@ -42,6 +42,8 @@ enum TokenType {
     LNOT, // Logical NOT (aka !)
     TRUE,
     FALSE,
+
+    IDENT,
 };
 
 extern std::string TokenTypeString[];
@@ -62,6 +64,8 @@ struct Token {
     TokenType type;
     const std::string text;
     Value value;
+    // For IDENTs
+    bool processedByParser;
     // Only for blocks
     unsigned int pairIp = 0;
 };
