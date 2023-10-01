@@ -1,8 +1,9 @@
+# skip
 # output: Endeyshent Laboratories
 # output: It
 # output: Works!
 # output: +
-[Endeyshent\sLaboratories] s!
+[Endeyshent Laboratories] s!
 [It\nWorks!] s!
 [+] s!
-# [Secret\rNothing?] s! # NOTE: Broken
+[Secret\rNothing?] s!

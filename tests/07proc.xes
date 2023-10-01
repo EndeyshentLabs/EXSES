@@ -1,9 +1,17 @@
 # output: 56
 # output: 88
-432 ' 56 ! "
+# output: Hello, 
+# output: EndeyshentLabs
+Do56 ' 56 ! "
 
-432 :
+Do56 :
 
-512 ' ! "
+Print ' ! "
 
-88 512 :
+88 Print :
+
+Greet ' # name
+    [Hello, ] s! s!
+"
+
+[EndeyshentLabs] Greet :
