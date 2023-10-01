@@ -16,7 +16,18 @@
         std::system((command).c_str());                \
     } while (0)
 
+enum class BindingSize {
+    BYTE = 8,
+    WORD = 16,
+    DWORD = 32,
+    QWORD = 64
+};
+
+#define STR_(x) #x
+#define STR(x) STR_(x)
+
 std::map<std::string, unsigned int> procs;
+std::map<std::string, BindingSize> bindings;
 
 void Parser::parse()
 {
@@ -148,28 +159,94 @@ void Parser::compileToNasmLinux86_64()
             error(token, "User input is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case BIND: {
-            output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
-            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
+            if (this->program.size() - ip - 1 == 0)
+                error(token, "Expected binding size as IDENT but got nothing");
+
+            Token& size = this->program[ip - 1];
+
+            if (size.type != IDENT)
+                error(token, std::format("Expected size name as IDENT but got {}", TokenTypeString[size.type]));
+            size.processedByParser = true;
+
+            if (this->program.size() - ip - 2 == 0)
+                error(token, "Expected binding name as IDENT but got nothing");
+
+            Token& name = this->program[ip - 2];
+
+            if (name.type != IDENT)
+                error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
+            name.processedByParser = true;
+
+            BindingSize bindingSize;
+
+            if (size.value.text == "byte") {
+                bindingSize = BindingSize::BYTE;
+            } else if (size.value.text == "word") {
+                bindingSize = BindingSize::WORD;
+            } else if (size.value.text == "dword") {
+                bindingSize = BindingSize::DWORD;
+            } else if (size.value.text == "qword") {
+                bindingSize = BindingSize::QWORD;
+            } else {
+                error(token, std::format("Unknown binding size '{}'", size.value.text));
+            }
+
+            bindings.insert_or_assign(name.value.text, bindingSize);
         } break;
         case SAVE: {
+            if (this->program.size() - ip - 1 == 0)
+                error(token, "Expected binding name as IDENT but got nothing");
+
+            Token& name = this->program[ip - 1];
+
+            if (name.type != IDENT)
+                error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
+            name.processedByParser = true;
+
+            if (!bindings.contains(name.value.text)) {
+                error(token, std::format("Binding '{}' is not defined", name.value.text));
+            }
+
+            std::string cast;
+
             output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
-            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
+            output.append("    pop rax\n");
+            output.append(std::format("    mov [{}], rax\n", name.value.text));
         } break;
         case LOAD: {
+            if (this->program.size() - ip - 1 == 0)
+                error(token, "Expected binding name as IDENT but got nothing");
+
+            Token& name = this->program[ip - 1];
+
+            if (name.type != IDENT)
+                error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
+            name.processedByParser = true;
+
+            if (!bindings.contains(name.value.text)) {
+                error(token, std::format("Binding '{}' is not defined", name.value.text));
+            }
+
             output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
-            error(token, "Bindings are not implemented in NASM_LINUX_X86_64 target!");
+            output.append(std::format("    mov rax, [{}]\n", name.value.text));
+            output.append("    push rax\n");
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
             error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case MAKEPROC: {
+            if (this->program.size() - ip - 1 == 0)
+                error(token, "Expected function name as IDENT but got nothing");
+
             Token& before = this->program[ip - 1];
-            if (before.type != IDENT) {
+
+            if (before.type != IDENT)
                 error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
-            }
             before.processedByParser = true;
+
             procs.insert_or_assign(before.value.text, ip);
+
             output.append(";; PRE-MAKEPROC\n");
             output.append(std::format("    jmp addr_{}\n", token.pairIp));
             output.append(std::format("addr_{}: ;; {}: MAKEPROC (to {})\n", ip, token.pos.toString(), token.pairIp));
@@ -329,7 +406,26 @@ void Parser::compileToNasmLinux86_64()
         output.append("    saved_rsp: resq 1\n");
         output.append("    saved_rsp_offset: resb 65536\n");
         output.append("    saved_rsp_end:\n");
-        // TODO: Populate the .bss
+
+        for (auto const& [name, size] : bindings) {
+            char mnemonic;
+            switch (size) {
+            case BindingSize::BYTE:
+                mnemonic = 'b';
+                break;
+            case BindingSize::WORD:
+                mnemonic = 'w';
+                break;
+            case BindingSize::DWORD:
+                mnemonic = 'd';
+                break;
+            case BindingSize::QWORD:
+                mnemonic = 'q';
+                break;
+            }
+
+            output.append(std::format("    {}: res{} 1\n", name, mnemonic));
+        }
     }
 
 #if 1
