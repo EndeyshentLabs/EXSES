@@ -263,14 +263,15 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: ENDPROC\n", ip, token.pos.toString()));
         } break;
         case INVOKEPROC: {
+            if (this->program.size() - ip - 1 == 0)
+                error(token, "Expected function name as IDENT but got nothing");
+
             Token& before = this->program[ip - 1];
-            if (before.type != IDENT) {
+
+            if (before.type != IDENT)
                 error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
-            }
-            if (!procs.contains(before.value.text)) {
-                error(token, std::format("Procedure '{}' is not defined", before.value.text));
-            }
             before.processedByParser = true;
+
             output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
             output.append("    mov rax, rsp\n");
             output.append("    mov rsp, [saved_rsp]\n");
