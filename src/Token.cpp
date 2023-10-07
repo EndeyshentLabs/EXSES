@@ -33,6 +33,14 @@ TokenType tokenTypeFromString(std::string str)
         return SAVE;
     } else if (str == "^") {
         return LOAD;
+    } else if (str == "^8") {
+        return LOAD8;
+    } else if (str == "^16") {
+        return LOAD16;
+    } else if (str == "^32") {
+        return LOAD32;
+    } else if (str == "^64") {
+        return LOAD64;
     } else if (str == "?:") {
         return TERNARY;
     } else if (str == "'") {

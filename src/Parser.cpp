@@ -29,6 +29,18 @@ enum class BindingSize {
 std::map<std::string, unsigned int> procs;
 std::map<std::string, BindingSize> bindings;
 
+#define LOAD_COMMON()                                                                                       \
+    if (this->program.size() - ip - 1 == 0)                                                                 \
+        error(token, "Expected binding name as IDENT but got nothing");                                     \
+    Token& name = this->program[ip - 1];                                                                    \
+    if (name.type != IDENT)                                                                                 \
+        error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type])); \
+    name.processedByParser = true;                                                                          \
+    if (!bindings.contains(name.value.text)) {                                                              \
+        error(token, std::format("Binding '{}' is not defined", name.value.text));                          \
+    }                                                                                                       \
+    (void)NULL
+
 void Parser::parse()
 {
     switch (this->target) {
@@ -219,21 +231,50 @@ void Parser::compileToNasmLinux86_64()
         case LOAD: {
             output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
 
-            if (this->program.size() - ip - 1 == 0)
-                error(token, "Expected binding name as IDENT but got nothing");
+            LOAD_COMMON();
 
-            Token& name = this->program[ip - 1];
-
-            if (name.type != IDENT)
-                error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
-            name.processedByParser = true;
-
-            if (!bindings.contains(name.value.text)) {
-                error(token, std::format("Binding '{}' is not defined", name.value.text));
-            }
-
-            output.append(std::format("    mov r11, [{}]\n", name.value.text));
+            output.append(std::format("    mov r11, {}\n", name.value.text));
             output.append("    push r11\n");
+        } break;
+        case LOAD8: {
+            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
+            LOAD_COMMON();
+
+            output.append(std::format("    mov r11, {}\n", name.value.text));
+            output.append("    xor r12, r12\n");
+            output.append("    mov r12b, [r11]\n");
+            output.append("    push r12\n");
+        } break;
+        case LOAD16: {
+            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
+            LOAD_COMMON();
+
+            output.append(std::format("    mov r11, {}\n", name.value.text));
+            output.append("    xor r12, r12\n");
+            output.append("    mov r12w, [r11]\n");
+            output.append("    push r12\n");
+        } break;
+        case LOAD32: {
+            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
+            LOAD_COMMON();
+
+            output.append(std::format("    mov r11, {}\n", name.value.text));
+            output.append("    xor r12, r12\n");
+            output.append("    mov r12d, [r11]\n");
+            output.append("    push r12\n");
+        } break;
+        case LOAD64: {
+            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
+            LOAD_COMMON();
+
+            output.append(std::format("    mov r11, {}\n", name.value.text));
+            output.append("    xor r12, r12\n");
+            output.append("    mov r12, [r11]\n");
+            output.append("    push r12\n");
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));

@@ -283,6 +283,7 @@ void Lexer::lexSource()
             this->program.push_back(this->makeNumber());
         } else if (this->curChar == '[') {
             this->program.push_back(this->makeString());
+            this->advance();
         } else {
             this->program.push_back(this->makeIdentifier());
         }
