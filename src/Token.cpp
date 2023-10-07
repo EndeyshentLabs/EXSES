@@ -1,45 +1,6 @@
 #include <Token.hpp>
 #include <vector>
 
-std::string TokenTypeString[] = {
-    "PUSH",
-    "STRING",
-    "STRING_DUMP",
-    "STRING_PLUS",
-    "DUP",
-    "OVER",
-    "DROP",
-    "SWAP",
-    "PLUS",
-    "MINUS",
-    "MULT",
-    "DIV",
-    "DUMP",
-    "INPUT",
-    "BIND",
-    "SAVE",
-    "LOAD",
-    "TERNARY",
-    "MAKEPROC",
-    "ENDPROC",
-    "INVOKEPROC",
-    "IF",
-    "ENDIF",
-    "EQUAL",
-    "NOTEQUAL",
-    "LESS",
-    "LESSEQUAL",
-    "GREATER",
-    "GREATEREQUAL",
-    "LOR",
-    "LAND",
-    "LNOT",
-    "TRUE",
-    "FALSE",
-
-    "IDENT",
-};
-
 TokenType tokenTypeFromString(std::string str)
 {
     if (str == "s!") {
