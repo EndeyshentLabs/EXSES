@@ -43,7 +43,20 @@ enum TokenType {
     LNOT, // Logical NOT (aka !)
     TRUE,
     FALSE,
+    // Register manipulation
+    TORAX,
+    TORBX,
+    TORCX,
+    TORDX,
+    TORSI,
+    TORDI,
+    TORBP,
+    TOR8,
+    TOR9,
+    TOR10,
+    SYSTEM_SYSCALL,
 
+    // Identifier
     IDENT,
 };
 
@@ -82,6 +95,17 @@ static const std::string TokenTypeString[] = {
     "LNOT",
     "TRUE",
     "FALSE",
+    "TORAX",
+    "TORBX",
+    "TORCX",
+    "TORDX",
+    "TORSI",
+    "TORDI",
+    "TORBP",
+    "TOR8",
+    "TOR9",
+    "TOR10",
+    "SYSTEM_SYSCALL",
 
     "IDENT",
 };
@@ -119,6 +143,17 @@ static const std::vector<std::string> Keywords = {
     "!!",
     "true",
     "false",
+    ">rax",
+    ">rbx",
+    ">rcx",
+    ">rdx",
+    ">rsi",
+    ">rdi",
+    ">rbp",
+    ">r8",
+    ">r9",
+    ">r10",
+    "\\syscall",
 };
 
 TokenType tokenTypeFromString(std::string str);

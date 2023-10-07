@@ -74,8 +74,8 @@ void Parser::compileToNasmLinux86_64()
         switch (token.type) {
         case PUSH: {
             output.append(std::format("addr_{}: ;; {}: PUSH {}\n", ip, token.pos.toString(), std::stoi(token.value.text)));
-            output.append(std::format("    mov rax, {}\n", token.value.text));
-            output.append("    push rax\n");
+            output.append(std::format("    mov r11, {}\n", token.value.text));
+            output.append("    push r11\n");
         } break;
         case STRING: {
             output.append(std::format("addr_{}: ;; {}: STRING {}\n", ip, token.pos.toString(), token.value.text));
@@ -108,7 +108,7 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case DROP: {
             output.append(std::format("addr_{}: ;; {}: DROP\n", ip, token.pos.toString()));
-            output.append("    pop rax\n");
+            output.append("    pop r11\n");
         } break;
         case SWAP: {
             output.append(std::format("addr_{}: ;; {}: SWAP\n", ip, token.pos.toString()));
@@ -159,6 +159,8 @@ void Parser::compileToNasmLinux86_64()
             error(token, "User input is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case BIND: {
+            output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
+
             if (this->program.size() - ip - 1 == 0)
                 error(token, "Expected binding size as IDENT but got nothing");
 
@@ -194,6 +196,8 @@ void Parser::compileToNasmLinux86_64()
             bindings.insert_or_assign(name.value.text, bindingSize);
         } break;
         case SAVE: {
+            output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
+
             if (this->program.size() - ip - 1 == 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
@@ -209,11 +213,12 @@ void Parser::compileToNasmLinux86_64()
 
             std::string cast;
 
-            output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
-            output.append("    pop rax\n");
-            output.append(std::format("    mov [{}], rax\n", name.value.text));
+            output.append("    pop r11\n");
+            output.append(std::format("    mov [{}], r11\n", name.value.text));
         } break;
         case LOAD: {
+            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
             if (this->program.size() - ip - 1 == 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
@@ -227,9 +232,8 @@ void Parser::compileToNasmLinux86_64()
                 error(token, std::format("Binding '{}' is not defined", name.value.text));
             }
 
-            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
-            output.append(std::format("    mov rax, [{}]\n", name.value.text));
-            output.append("    push rax\n");
+            output.append(std::format("    mov r11, [{}]\n", name.value.text));
+            output.append("    push r11\n");
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
@@ -368,6 +372,50 @@ void Parser::compileToNasmLinux86_64()
             output.append("    not rax\n");
             output.append("    push rax\n");
         } break;
+        case TORAX: {
+            output.append(std::format("addr_{}: ;; {}: TORAX\n", ip, token.pos.toString()));
+            output.append("    pop rax\n");
+        } break;
+        case TORBX: {
+            output.append(std::format("addr_{}: ;; {}: TORBX\n", ip, token.pos.toString()));
+            output.append("    pop rbx\n");
+        } break;
+        case TORCX: {
+            output.append(std::format("addr_{}: ;; {}: TORCX\n", ip, token.pos.toString()));
+            output.append("    pop rcx\n");
+        } break;
+        case TORDX: {
+            output.append(std::format("addr_{}: ;; {}: TORDX\n", ip, token.pos.toString()));
+            output.append("    pop rdx\n");
+        } break;
+        case TORSI: {
+            output.append(std::format("addr_{}: ;; {}: TORSI\n", ip, token.pos.toString()));
+            output.append("    pop rsi\n");
+        } break;
+        case TORDI: {
+            output.append(std::format("addr_{}: ;; {}: TORDI\n", ip, token.pos.toString()));
+            output.append("    pop rdi\n");
+        } break;
+        case TORBP: {
+            output.append(std::format("addr_{}: ;; {}: TORBP\n", ip, token.pos.toString()));
+            output.append("    pop rbp\n");
+        } break;
+        case TOR8: {
+            output.append(std::format("addr_{}: ;; {}: TOR8\n", ip, token.pos.toString()));
+            output.append("    pop r8\n");
+        } break;
+        case TOR9: {
+            output.append(std::format("addr_{}: ;; {}: TOR9\n", ip, token.pos.toString()));
+            output.append("    pop r9\n");
+        } break;
+        case TOR10: {
+            output.append(std::format("addr_{}: ;; {}: TOR10\n", ip, token.pos.toString()));
+            output.append("    pop r10\n");
+        } break;
+        case SYSTEM_SYSCALL: {
+            output.append(std::format("addr_{}: ;; {}: SYSCALL\n", ip, token.pos.toString()));
+            output.append("    syscall\n");
+        } break;
         case IDENT: {
             // TODO: Learn how to set `processedByParser` by reference
             if (!token.processedByParser) {
@@ -377,7 +425,7 @@ void Parser::compileToNasmLinux86_64()
         case UNDEFINED:
         case TRUE:
         case FALSE: {
-            std::cout << "UwU EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n";
+            std::cout << std::format("{}:{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", this->inputFileName, token.pos.toString());
             std::exit(69);
         } break;
         } // switch (token.type)

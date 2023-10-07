@@ -67,6 +67,28 @@ TokenType tokenTypeFromString(std::string str)
         return TRUE;
     } else if (str == "false") {
         return FALSE;
+    } else if (str == ">rax") {
+        return TORAX;
+    } else if (str == ">rbx") {
+        return TORBX;
+    } else if (str == ">rcx") {
+        return TORCX;
+    } else if (str == ">rdx") {
+        return TORDX;
+    } else if (str == ">rsi") {
+        return TORSI;
+    } else if (str == ">rdi") {
+        return TORDI;
+    } else if (str == ">rbp") {
+        return TORBP;
+    } else if (str == ">r8") {
+        return TOR8;
+    } else if (str == ">r9") {
+        return TOR9;
+    } else if (str == ">r10") {
+        return TOR10;
+    } else if (str == "\\syscall") {
+        return SYSTEM_SYSCALL;
     }
 
     return UNDEFINED;
