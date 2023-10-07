@@ -205,7 +205,12 @@ void Parser::compileToNasmLinux86_64()
                 error(token, std::format("Unknown binding size '{}'", size.value.text));
             }
 
-            bindings.insert_or_assign(name.value.text, bindingSize);
+            if (bindings.contains(name.value.text)) {
+                error(token, std::format("Binding with the name '{}' was alreay defined!", name.value.text));
+            } else if (procs.contains(name.value.text)) {
+                error(token, std::format("Procedure with the same name exist!", name.value.text));
+            }
+            bindings.insert({ name.value.text, bindingSize });
         } break;
         case SAVE: {
             output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
@@ -284,13 +289,19 @@ void Parser::compileToNasmLinux86_64()
             if (this->program.size() - ip - 1 == 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
-            Token& before = this->program[ip - 1];
+            Token& name = this->program[ip - 1];
 
-            if (before.type != IDENT)
-                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
-            before.processedByParser = true;
+            if (name.type != IDENT)
+                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+            name.processedByParser = true;
 
-            procs.insert_or_assign(before.value.text, ip);
+            if (procs.contains(name.value.text)) {
+                error(token, std::format("Procedure with the name '{}' was alreay defined!", name.value.text));
+            } else if (bindings.contains(name.value.text)) {
+                error(token, std::format("Binding with the same name exist!", name.value.text));
+            }
+
+            procs.insert({ name.value.text, ip });
 
             output.append(";; PRE-MAKEPROC\n");
             output.append(std::format("    jmp addr_{}\n", token.pairIp));
