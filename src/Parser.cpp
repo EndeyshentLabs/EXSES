@@ -456,6 +456,7 @@ void Parser::compileToNasmLinux86_64()
         case SYSTEM_SYSCALL: {
             output.append(std::format("addr_{}: ;; {}: SYSCALL\n", ip, token.pos.toString()));
             output.append("    syscall\n");
+            output.append("    push rax\n");
         } break;
         case IDENT: {
             // TODO: Learn how to set `processedByParser` by reference
