@@ -2,10 +2,10 @@
 msg qword <-
 [Hello, World!] msg <!
 
-1     >rax
-1     >rdi
-msg ^ >rsi
-14    >rdx
+1       >rax
+1       >rdi
+msg ^64 >rsi
+14      >rdx
 \syscall
 
 60 >rax
