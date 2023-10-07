@@ -19,6 +19,10 @@ syntax match xesOperators '\$'
 syntax match xesOperators '!'
 syntax match xesOperators '<-'
 syntax match xesOperators '\^'
+syntax match xesOperators '\^8'
+syntax match xesOperators '\^16'
+syntax match xesOperators '\^32'
+syntax match xesOperators '\^64'
 syntax match xesOperators '\''
 syntax match xesOperators '\"'
 syntax match xesOperators ':'
@@ -34,6 +38,23 @@ syntax match xesOperators '!!'
 syntax match xesOperators 's!'
 syntax match xesOperators 's+'
 syntax match xesOperators '@'
+
+syntax match xesSystem '>rax'
+syntax match xesSystem '>rbx'
+syntax match xesSystem '>rcx'
+syntax match xesSystem '>rdx'
+syntax match xesSystem '>rsi'
+syntax match xesSystem '>rdi'
+syntax match xesSystem '>rbp'
+syntax match xesSystem '>r8'
+syntax match xesSystem '>r9'
+syntax match xesSystem '>r10'
+syntax match xesSystem '\\syscall'
+
+syntax match xesBindingSize 'byte'
+syntax match xesBindingSize 'word'
+syntax match xesBindingSize 'dword'
+syntax match xesBindingSize 'qword'
 
 syntax match xesNumber "\v<\d+>"
 syntax match xesNumber "\v-<\d+>"
@@ -52,5 +73,7 @@ highlight default link xesBooleans       Boolean
 highlight default link xesConditional    Conditional
 highlight default link xesString         String
 highlight default link xesSpecial        Special
+highlight default link xesSystem         Special
+highlight default link xesBindingSize    Type
 
 let b:current_syntax = 'exses'
