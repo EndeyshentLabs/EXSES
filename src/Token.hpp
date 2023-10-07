@@ -5,6 +5,7 @@
 
 #include <Position.hpp>
 #include <Value.hpp>
+#include <vector>
 
 enum TokenType {
     UNDEFINED = -1,
@@ -47,6 +48,42 @@ enum TokenType {
 };
 
 extern std::string TokenTypeString[];
+static const std::vector<std::string> Keywords = {
+    "s!",
+    "s+",
+    "&",
+    "$&",
+    "_",
+    "$",
+    "+",
+    "-",
+    "*",
+    "/",
+    "!",
+    "@",
+    "<-",
+    "<!",
+    "^",
+    "?:",
+    "'",
+    "\"",
+    ":",
+    "(",
+    ")",
+    "=",
+    "<>",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "||",
+    "&&",
+    "!!",
+    "true",
+    "false",
+};
+
+TokenType tokenTypeFromString(std::string str);
 
 struct Token {
     Token(Position pos, TokenType type, std::string text, Value value)

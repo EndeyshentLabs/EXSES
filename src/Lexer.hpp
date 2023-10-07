@@ -38,6 +38,7 @@ private:
 
     Token makeNumber();
     Token makeString();
+    Token makeIdentifier();
 
     void linkBlocks();
 };

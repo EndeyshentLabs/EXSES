@@ -1,9 +1,11 @@
 #include <Lexer.hpp>
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -47,24 +49,18 @@ Lexer::Lexer(std::string fileName, Target target)
 void Lexer::advance()
 {
     this->cursor++;
+
     if (this->source[cursor] == 0) { // NOTE: Unsafe
         this->curChar = 0;
         return;
     }
+
     this->pos.col++;
     this->curChar = this->source.at(this->cursor);
-    if (this->curChar == '\n') {
-        this->cursor++;
-        if (this->source[cursor] == 0) { // NOTE: Unsafe
-            this->curChar = 0;
-            return;
-        }
-        this->pos.line++;
-        this->pos.col = 0;
-        this->curChar = this->source.at(this->cursor);
-    }
 }
 
+#ifdef USE_OLD_LEXER
+#warning "Using old lexer, this is deprecated"
 void Lexer::lexSource()
 {
     while (this->curChar != 0) {
@@ -117,6 +113,8 @@ void Lexer::lexSource()
             if (this->curChar == '&') {
                 type = LAND;
                 this->advance();
+            } else if (this->curChar != ' ') {
+                goto UNEXP_CHAR;
             }
             this->program.push_back(Token(startPos, type, type == LAND ? "&&" : "&", Value(ValueType::NONE, "")));
         } else if (this->curChar == '$') {
@@ -126,6 +124,8 @@ void Lexer::lexSource()
             if (this->curChar == '&') {
                 type = OVER;
                 this->advance();
+            } else if (this->curChar != ' ') {
+                goto UNEXP_CHAR;
             }
             this->program.push_back(Token(startPos, type, type == OVER ? "$&" : "$", Value(ValueType::NONE, "")));
         } else if (this->curChar == '_') {
@@ -138,6 +138,8 @@ void Lexer::lexSource()
             if (this->curChar == '!') {
                 type = LNOT;
                 this->advance();
+            } else if (this->curChar != ' ') {
+                goto UNEXP_CHAR;
             }
             this->program.push_back(Token(startPos, type, type == LNOT ? "!!" : "!", Value(ValueType::NONE, "")));
             // } else if (this->curChar == 's') {
@@ -191,6 +193,8 @@ void Lexer::lexSource()
                 type = NOTEQUAL;
                 text = "<>";
                 this->advance();
+            } else {
+                goto UNEXP_CHAR;
             }
             this->program.push_back(Token(startPos, type, text, Value(ValueType::NONE, "")));
         } else if (this->curChar == '>') {
@@ -200,6 +204,8 @@ void Lexer::lexSource()
             if (this->curChar == '=') {
                 type = GREATEREQUAL;
                 this->advance();
+            } else {
+                goto UNEXP_CHAR;
             }
             this->program.push_back(Token(startPos, type, type == GREATEREQUAL ? ">=" : ">", Value(ValueType::NONE, "")));
         } else if (this->curChar == '^') {
@@ -256,6 +262,33 @@ void Lexer::lexSource()
         }
     }
 }
+#else
+void Lexer::lexSource()
+{
+    while (this->curChar != '\0') {
+        if (this->curChar == ' ') {
+            this->advance();
+        } else if (this->curChar == '#') {
+            while (this->curChar != '\0' && this->curChar != '\n') {
+                this->advance();
+            }
+            this->pos.line++;
+            this->pos.col = 0;
+            this->advance();
+        } else if (this->curChar == '\n') {
+            this->pos.line++;
+            this->pos.col = 0;
+            this->advance();
+        } else if (std::isdigit(this->curChar)) {
+            this->program.push_back(this->makeNumber());
+        } else if (this->curChar == '[') {
+            this->program.push_back(this->makeString());
+        } else {
+            this->program.push_back(this->makeIdentifier());
+        }
+    }
+}
+#endif
 
 Token Lexer::makeNumber()
 {
@@ -284,6 +317,23 @@ Token Lexer::makeString()
     }
 
     return Token(startPos, STRING, buf, Value(ValueType::STRING, buf));
+}
+
+Token Lexer::makeIdentifier()
+{
+    std::string buf;
+    Position startPos(this->pos);
+
+    while (this->curChar != '\0' && !std::isspace(this->curChar)) {
+        buf.push_back(this->curChar);
+        this->advance();
+    }
+
+    if (std::find(Keywords.begin(), Keywords.end(), buf) != Keywords.end()) {
+        return Token(startPos, tokenTypeFromString(buf), buf, Value(ValueType::NONE, ""));
+    }
+
+    return Token(startPos, IDENT, buf, Value(ValueType::NONE, buf));
 }
 
 void Lexer::run()
