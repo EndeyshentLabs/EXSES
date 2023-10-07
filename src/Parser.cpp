@@ -484,6 +484,7 @@ void Parser::compileToNasmLinux86_64()
         } // switch (token.type)
     } // for
 
+    output.append("    ;; End of program\n");
     output.append("    mov rax, 60\n");
     output.append("    mov rdi, 0\n");
     output.append("    syscall\n");
