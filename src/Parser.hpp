@@ -25,11 +25,13 @@ public:
 
 private:
     std::string inputFileName;
-    unsigned int ip;
+    unsigned int ip = 0;
     std::vector<Token> program;
+    bool hadError = false;
 
     void compileToNasmLinux86_64();
     void error(Token token, std::string msg);
+    void note(Token token, std::string msg);
 };
 
 #endif /* EXSES_PARSER_H */

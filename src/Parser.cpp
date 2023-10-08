@@ -102,7 +102,7 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case STRING_PLUS: {
             output.append(std::format("addr_{}: ;; {}: STRING_PLUS\n", ip, token.pos.toString()));
-            error(token, "String-plus operation is not implemented in nasm-linux-x86_64!");
+            error(token, "String-plus operation is not implemented in nasm-linux-x86_64");
         } break;
         case DUP: {
             output.append(std::format("addr_{}: ;; {}: DUP\n", ip, token.pos.toString()));
@@ -168,7 +168,7 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case INPUT: {
             output.append(std::format("addr_{}: ;; {}: INPUT\n", ip, token.pos.toString()));
-            error(token, "User input is not implemented in NASM_LINUX_X86_64 target!");
+            error(token, "User input is not implemented in NASM_LINUX_X86_64 target");
         } break;
         case BIND: {
             output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
@@ -206,9 +206,11 @@ void Parser::compileToNasmLinux86_64()
             }
 
             if (bindings.contains(name.value.text)) {
-                error(token, std::format("Binding with the name '{}' was alreay defined!", name.value.text));
+                error(token, std::format("Binding with the name '{}' was alreay defined", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
             } else if (procs.contains(name.value.text)) {
-                error(token, std::format("Procedure with the same name exist!", name.value.text));
+                error(token, std::format("Procedure with the same name exist", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
             }
             bindings.insert({ name.value.text, bindingSize });
         } break;
@@ -275,7 +277,7 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case TERNARY: {
             output.append(std::format("addr_{}: ;; {}: TERNARY\n", ip, token.pos.toString()));
-            error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target!");
+            error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target");
         } break;
         case MAKEPROC: {
             if (ip - 1 < 0)
@@ -288,9 +290,11 @@ void Parser::compileToNasmLinux86_64()
             name.processedByParser = true;
 
             if (procs.contains(name.value.text)) {
-                error(token, std::format("Procedure with the name '{}' was alreay defined!", name.value.text));
+                error(token, std::format("Procedure with the name '{}' was alreay defined", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
             } else if (bindings.contains(name.value.text)) {
-                error(token, std::format("Binding with the same name exist!", name.value.text));
+                error(token, std::format("Binding with the same name exist", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
             }
 
             procs.insert({ name.value.text, ip });
@@ -477,6 +481,11 @@ void Parser::compileToNasmLinux86_64()
             std::exit(69);
         } break;
         } // switch (token.type)
+
+        if (this->hadError) {
+            std::cout << "INFO: Compilation \033[31;1mterminated\033[0m\n";
+            std::exit(1);
+        }
     } // for
 
     output.append("    ;; End of program\n");
@@ -545,5 +554,10 @@ void Parser::compileToNasmLinux86_64()
 void Parser::error(Token token, std::string msg)
 {
     std::cout << std::format("{}:{}: ERROR: {}.\n", this->inputFileName, token.pos.toString(), msg);
-    std::exit(1);
+    this->hadError = true;
+}
+
+void Parser::note(Token token, std::string msg)
+{
+    std::cout << std::format("{}:{}: NOTE: {}.\n", this->inputFileName, token.pos.toString(), msg);
 }
