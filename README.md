@@ -7,14 +7,14 @@
 <img src="./assets/logo1.png" alt="EXSES logp" width="128" />
 EXSES - smol stack-oriented concatenative programming language. Development have just started: do not expect something revolutionary new.
 
-## [Language Reference](./REFERENCE.md) 
+## [Language Reference](./REFERENCE.md)
 
 ## Example
 
 ### Hello, World!
 
 ```python
-[Hello,\sWorld!] !
+[Hello, World!] s!
 ```
 
 ### Basic
@@ -40,15 +40,17 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 #### Bindings
 
 ```python
-# bind 500 to '1100'. NOTE: You can use strings as names
-1100 500 <-
-# bind 80 to '1101'
-1101 80 <-
+# bind 500 to 'FiveOO'
+FiveOO qword <-
+500 FiveOO <!
+# bind 80 to 'EightO'
+EightO qword <-
+80 EightO <!
 
-# load value of '1100' (e.g 500)
-1100 ^
-# load value of '1101' (e.g 80)
-1101 ^
+# load value of 'FiveOO' (e.g 500)
+FiveOO ^ ^64 # ^64 - dereferencing
+# load value of 'EightO' (e.g 80)
+1101 ^ ^64
 - # subtract
 ! # print (420)
 ```
@@ -56,11 +58,11 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 #### Procedures
 
 ```python
-1100 ' # int  # create a procedure named "1100". NOTE: You can use strings as names
+minus80 ' # int  # create a procedure named "minus80".
     80 - ! # body of the procedure. subtract 80 from the value that was on top of the stack when procedure was invoked and print the result
 " # close the procedure
 
-500 1100 : # `:` call a procedure
+500 minus80 : # `:` call a procedure
 ```
 
 ## Build-it
@@ -68,12 +70,12 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 Dependencies:
 
 - CMake >= 3.14
-- Any C++ compiler with C++20 (I use GCC 12.2)
+- Any C++ compiler with C++20 (I use GCC 13.2)
 
 ```console
 $ cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build --config Release
 $ vim test.xes
 ... WRITING ...
-$ ./build/exsi test.xes
+$ ./build/exsi nasm-linux-x86_64 test.xes # only for linux for now
 ```
