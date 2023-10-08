@@ -242,7 +242,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push r11\n");
         } break;
         case LOAD8: {
-            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: LOAD8\n", ip, token.pos.toString()));
 
             LOAD_COMMON();
 
@@ -252,7 +252,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push r12\n");
         } break;
         case LOAD16: {
-            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: LOAD16\n", ip, token.pos.toString()));
 
             LOAD_COMMON();
 
@@ -262,7 +262,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push r12\n");
         } break;
         case LOAD32: {
-            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: LOAD32\n", ip, token.pos.toString()));
 
             LOAD_COMMON();
 
@@ -272,7 +272,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push r12\n");
         } break;
         case LOAD64: {
-            output.append(std::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+            output.append(std::format("addr_{}: ;; {}: LOAD64\n", ip, token.pos.toString()));
 
             LOAD_COMMON();
 
