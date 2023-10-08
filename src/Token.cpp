@@ -41,7 +41,7 @@ TokenType tokenTypeFromString(std::string str)
         return LOAD32;
     } else if (str == "^64") {
         return LOAD64;
-    } else if (str == "?:") {
+    } else if (str == ".?") {
         return TERNARY;
     } else if (str == "'") {
         return MAKEPROC;

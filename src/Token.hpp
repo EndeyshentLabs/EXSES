@@ -138,7 +138,7 @@ static const std::vector<std::string> Keywords = {
     "^16",
     "^32",
     "^64",
-    "?:",
+    ".?",
     "'",
     "\"",
     ":",
