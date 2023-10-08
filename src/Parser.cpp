@@ -343,6 +343,20 @@ void Parser::compileToNasmLinux86_64()
         case ENDIF: {
             output.append(std::format("addr_{}: ;; {}: ENDIF (from {})\n", ip, token.pos.toString(), token.pairIp));
         } break;
+        case WHILE: {
+            output.append(std::format("addr_{}: ;; {}: WHILE (from {})\n", ip, token.pos.toString(), token.pairIp));
+        } break;
+        case DOWHILE: {
+            output.append(std::format("addr_{}: ;; {}: DOWHILE (to {})\n", ip, token.pos.toString(), token.pairIp));
+            output.append("    pop rax\n");
+            output.append("    test rax, rax\n");
+            output.append(std::format("    jz addr_{}\n", token.pairIp));
+        } break;
+        case ENDWHILE: {
+            output.append("    ;; Pre-ENDWHILE\n");
+            output.append(std::format("    jmp addr_{}\n", token.pairIp));
+            output.append(std::format("addr_{}: ;; {}: ENDWHILE (to {})\n", ip, token.pos.toString(), token.pairIp));
+        } break;
         case EQUAL: {
             output.append(std::format("addr_{}: ;; {}: EQUAL\n", ip, token.pos.toString()));
             output.append("    mov rcx, 0\n");

@@ -53,6 +53,12 @@ TokenType tokenTypeFromString(std::string str)
         return IF;
     } else if (str == ")") {
         return ENDIF;
+    } else if (str == "{") {
+        return WHILE;
+    } else if (str == "=>") {
+        return DOWHILE;
+    } else if (str == "}") {
+        return ENDWHILE;
     } else if (str == "=") {
         return EQUAL;
     } else if (str == "<>") {

@@ -364,7 +364,10 @@ enum class BlockType {
     IF,
     ENDIF,
     PROC,
-    ENDPROC
+    ENDPROC,
+    WHILE,
+    DOWHILE,
+    ENDWHILE,
 };
 
 struct Block {
@@ -422,6 +425,35 @@ void Lexer::linkBlocks()
             token.pairIp = block.ip;
 
             program[block.ip].pairIp = ip;
+        } else if (token.type == WHILE) {
+            blockStack.push_back(Block(BlockType::WHILE, ip));
+        } else if (token.type == DOWHILE) {
+            blockStack.push_back(Block(BlockType::DOWHILE, ip));
+        } else if (token.type == ENDWHILE) {
+            if (blockStack.size() < 2) {
+                std::printf("%s:%s: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            Block doWhile = blockStack.back();
+            blockStack.pop_back();
+
+            if (doWhile.type != BlockType::DOWHILE) {
+                std::printf("%s:%s: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            Block whil = blockStack.back();
+            blockStack.pop_back();
+
+            if (whil.type != BlockType::WHILE) {
+                std::printf("%s:%s: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                std::exit(1);
+            }
+
+            token.pairIp = whil.ip;
+            program[doWhile.ip].pairIp = ip;
+            program[whil.ip].pairIp = ip;
         }
     }
 
@@ -429,7 +461,7 @@ void Lexer::linkBlocks()
 
     for (Block& block : blockStack) {
         std::string msg;
-        if (block.type == BlockType::IF || block.type == BlockType::PROC) {
+        if (block.type == BlockType::IF || block.type == BlockType::PROC || block.type == BlockType::WHILE || block.type == BlockType::DOWHILE) {
             msg = "Unclosed block";
         } else {
             msg = "Unexpected block closing.";
