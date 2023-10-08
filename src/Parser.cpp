@@ -526,7 +526,6 @@ void Parser::compileToNasmLinux86_64()
         }
     }
 
-#if 1
     {
         std::ofstream outputStream(outputFilepath.c_str(), std::ios::out | std::ios::binary);
         if (!outputStream.is_open()) {
@@ -537,7 +536,6 @@ void Parser::compileToNasmLinux86_64()
         }
         outputStream.close();
     }
-#endif
 
     // TODO: Should stop compilation if failed
     CMD(std::format("nasm -g -felf64 {}", outputFilepath));
