@@ -474,9 +474,15 @@ void Parser::compileToNasmLinux86_64()
                 // error(token, std::format("Unexpected IDENT '{}'", token.value.text));
             }
         } break;
-        case UNDEFINED:
-        case TRUE:
+        case TRUE: {
+            output.append(std::format("addr_{}: ;; {}: TRUE\n", ip, token.pos.toString()));
+            output.append("    push 1");
+        } break;
         case FALSE: {
+            output.append(std::format("addr_{}: ;; {}: TRUE\n", ip, token.pos.toString()));
+            output.append("    push 0");
+        } break;
+        case UNDEFINED: {
             std::cout << std::format("{}:{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", this->inputFileName, token.pos.toString());
             std::exit(69);
         } break;
