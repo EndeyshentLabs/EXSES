@@ -1,17 +1,10 @@
 # output: 5
-strlen$loop '
-    & ^8 0 <> (
-        1 +
-        strlen$loop :
-    )
-"
-
 strlen '
     &
-    strlen$loop :
-
-    $
-    -
+    { & ^8 0 <> =>
+        1 +
+    }
+    $ -
 "
 
 msg word <-
