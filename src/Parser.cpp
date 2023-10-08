@@ -30,9 +30,9 @@ std::map<std::string, unsigned int> procs;
 std::map<std::string, BindingSize> bindings;
 
 #define LOAD_COMMON()                                                                                       \
-    if (this->program.size() - ip - 1 == 0)                                                                 \
+    if (ip - 1 == 0)                                                                                        \
         error(token, "Expected binding name as IDENT but got nothing");                                     \
-    Token& name = this->program[ip - 1];                                                                    \
+    Token& name = this->program.at(ip - 1);                                                                 \
     if (name.type != IDENT)                                                                                 \
         error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type])); \
     name.processedByParser = true;                                                                          \
@@ -173,19 +173,19 @@ void Parser::compileToNasmLinux86_64()
         case BIND: {
             output.append(std::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
 
-            if (this->program.size() - ip - 1 == 0)
+            if (ip - 1 < 0)
                 error(token, "Expected binding size as IDENT but got nothing");
 
-            Token& size = this->program[ip - 1];
+            Token& size = this->program.at(ip - 1);
 
             if (size.type != IDENT)
                 error(token, std::format("Expected size name as IDENT but got {}", TokenTypeString[size.type]));
             size.processedByParser = true;
 
-            if (this->program.size() - ip - 2 == 0)
+            if (ip - 2 < 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
-            Token& name = this->program[ip - 2];
+            Token& name = this->program.at(ip - 2);
 
             if (name.type != IDENT)
                 error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
@@ -215,10 +215,10 @@ void Parser::compileToNasmLinux86_64()
         case SAVE: {
             output.append(std::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
 
-            if (this->program.size() - ip - 1 == 0)
+            if (ip - 1 < 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
-            Token& name = this->program[ip - 1];
+            Token& name = this->program.at(ip - 1);
 
             if (name.type != IDENT)
                 error(token, std::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
@@ -286,10 +286,10 @@ void Parser::compileToNasmLinux86_64()
             error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target!");
         } break;
         case MAKEPROC: {
-            if (this->program.size() - ip - 1 == 0)
+            if (ip - 1 < 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
-            Token& name = this->program[ip - 1];
+            Token& name = this->program.at(ip - 1);
 
             if (name.type != IDENT)
                 error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
@@ -319,16 +319,16 @@ void Parser::compileToNasmLinux86_64()
             output.append(std::format("addr_{}: ;; {}: ENDPROC\n", ip, token.pos.toString()));
         } break;
         case INVOKEPROC: {
-            if (this->program.size() - ip - 1 == 0)
+            output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
+            if (ip - 1 < 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
-            Token& before = this->program[ip - 1];
+            Token& before = this->program.at(ip - 1);
 
             if (before.type != IDENT)
                 error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
             before.processedByParser = true;
 
-            output.append(std::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
             output.append("    mov rax, rsp\n");
             output.append("    mov rsp, [saved_rsp]\n");
             output.append(std::format("    call addr_{}\n", procs[before.value.text]));
