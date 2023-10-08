@@ -1,0 +1,20 @@
+# output: 5
+strlen$loop '
+    & ^8 0 <> (
+        1 +
+        strlen$loop :
+    )
+"
+
+strlen '
+    &
+    strlen$loop :
+
+    $
+    -
+"
+
+msg word <-
+[Hello] msg <!
+
+msg ^ ^64 strlen : !
