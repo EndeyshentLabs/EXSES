@@ -65,12 +65,17 @@ syntax match xesConditional '\.?'
 syntax match xesConditional '('
 syntax match xesConditional ')'
 
+syntax match xesLoop '{'
+syntax match xesLoop '=>'
+syntax match xesLoop '}'
+
 highlight default link xesTodo           Todo
 highlight default link xesNumber         Number
 highlight default link xesCommentLine    Comment
 highlight default link xesOperators      Keyword
 highlight default link xesBooleans       Boolean
 highlight default link xesConditional    Conditional
+highlight default link xesLoop           Repeat
 highlight default link xesString         String
 highlight default link xesSpecial        Special
 highlight default link xesSystem         Special
