@@ -315,15 +315,18 @@ void Parser::compileToNasmLinux86_64()
             if (ip - 1 < 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
-            Token& before = this->program.at(ip - 1);
+            Token& name = this->program.at(ip - 1);
 
-            if (before.type != IDENT)
-                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[before.type]));
-            before.processedByParser = true;
+            if (name.type != IDENT)
+                error(token, std::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+            name.processedByParser = true;
+
+            if (!procs.contains(name.value.text))
+                error(token, std::format("Procedure '{}' is not defined", name.value.text));
 
             output.append("    mov rax, rsp\n");
             output.append("    mov rsp, [saved_rsp]\n");
-            output.append(std::format("    call addr_{}\n", procs[before.value.text]));
+            output.append(std::format("    call addr_{}\n", procs.at(name.value.text)));
             output.append("    mov [saved_rsp], rsp\n");
             output.append("    mov rsp, rax\n");
         } break;
