@@ -559,7 +559,7 @@ void Parser::compileToNasmLinux86_64()
 
 void Parser::error(Token token, std::string msg)
 {
-    std::cout << std::format("{}:{}: ERROR: {}.\n", this->inputFileName, token.pos.toString(), msg);
+    std::cerr << std::format("{}:{}: ERROR: {}.\n", this->inputFileName, token.pos.toString(), msg);
     this->hadError = true;
 }
 
