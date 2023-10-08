@@ -43,6 +43,7 @@ Lexer::Lexer(std::string fileName, Target target)
 
     this->curChar = this->source[0];
 
+    this->pos.col = 1;
     this->run();
 }
 
