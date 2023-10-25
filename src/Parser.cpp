@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <fmt/color.h>
 
 #define CMD(command)                                   \
     do {                                               \
@@ -31,7 +32,7 @@ std::map<std::string, unsigned int> procs;
 std::map<std::string, BindingSize> bindings;
 
 #define LOAD_COMMON()                                                                                       \
-    if (ip - 1 == 0)                                                                                        \
+    if ((int)ip - 1 < 0)                                                                                    \
         error(token, "Expected binding name as IDENT but got nothing");                                     \
     Token& name = this->program.at(ip - 1);                                                                 \
     if (name.type != IDENT)                                                                                 \
@@ -174,7 +175,7 @@ void Parser::compileToNasmLinux86_64()
         case BIND: {
             output.append(fmt::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
 
-            if (ip - 1 < 0)
+            if ((int)ip - 1 < 0)
                 error(token, "Expected binding size as IDENT but got nothing");
 
             Token& size = this->program.at(ip - 1);
@@ -183,7 +184,7 @@ void Parser::compileToNasmLinux86_64()
                 error(token, fmt::format("Expected size name as IDENT but got {}", TokenTypeString[size.type]));
             size.processedByParser = true;
 
-            if (ip - 2 < 0)
+            if ((int)ip - 2 < 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
             Token& name = this->program.at(ip - 2);
@@ -218,7 +219,7 @@ void Parser::compileToNasmLinux86_64()
         case SAVE: {
             output.append(fmt::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
 
-            if (ip - 1 < 0)
+            if ((int)ip - 1 < 0)
                 error(token, "Expected binding name as IDENT but got nothing");
 
             Token& name = this->program.at(ip - 1);
@@ -281,7 +282,7 @@ void Parser::compileToNasmLinux86_64()
             error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target");
         } break;
         case MAKEPROC: {
-            if (ip - 1 < 0)
+            if ((int)ip - 1 < 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
             Token& name = this->program.at(ip - 1);
@@ -317,7 +318,7 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case INVOKEPROC: {
             output.append(fmt::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
-            if (ip - 1 < 0)
+            if ((int)ip - 1 < 0)
                 error(token, "Expected function name as IDENT but got nothing");
 
             Token& name = this->program.at(ip - 1);
