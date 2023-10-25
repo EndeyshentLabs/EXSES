@@ -44,7 +44,8 @@ Lexer::Lexer(std::string fileName, Target target)
 
     this->curChar = this->source[0];
 
-    this->pos.col = 1;
+    this->pos.col = 0;
+    this->pos.fileName = fileName;
     this->run();
 }
 
@@ -142,7 +143,7 @@ void Lexer::run()
 #if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
-        fmt::print("{}:{}: type: {}, text: `{}`, pairIp: {}\n", this->fileName, token.pos.toString(), TokenTypeString[token.type], token.text, token.pairIp);
+        fmt::print("{}: type: {}, text: `{}`, pairIp: {}\n", token.pos.toString(), TokenTypeString[token.type], token.text, token.pairIp);
     }
 #endif
 
@@ -187,7 +188,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::IF, ip));
         } else if (token.type == ENDIF) {
             if (blockStack.size() < 1) {
-                fmt::print("{}:{}: ERROR: `ENDIF` without `IF`\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDIF` without `IF`\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -195,7 +196,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (block.type != BlockType::IF) {
-                fmt::print("{}:{}: ERROR: `ENDIF` can only close `IF` blocks!\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDIF` can only close `IF` blocks!\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -206,7 +207,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::PROC, ip));
         } else if (token.type == ENDPROC) {
             if (blockStack.size() < 1) {
-                fmt::print("{}:{}: ERROR: `ENDPROC` without `MAKEPROC`\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDPROC` without `MAKEPROC`\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -214,7 +215,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (block.type != BlockType::PROC) {
-                fmt::print("{}:{}: ERROR: `ENDPROC` can only close procedure body!\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDPROC` can only close procedure body!\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -227,7 +228,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::DOWHILE, ip));
         } else if (token.type == ENDWHILE) {
             if (blockStack.size() < 2) {
-                fmt::print("{}:{}: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -235,7 +236,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (doWhile.type != BlockType::DOWHILE) {
-                fmt::print("{}:{}: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -243,7 +244,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (whil.type != BlockType::WHILE) {
-                fmt::print("{}:{}: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", this->fileName, token.pos.toString());
+                fmt::print("{}: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", token.pos.toString());
                 std::exit(1);
             }
 
@@ -262,7 +263,7 @@ void Lexer::linkBlocks()
         } else {
             msg = "Unexpected block closing.";
         }
-        fmt::print("{}:{}: ERROR: {}.\n", this->fileName, this->program[block.ip].pos.toString(), msg);
+        fmt::print("{}: ERROR: {}.\n", this->program[block.ip].pos.toString(), msg);
         fail = true;
     }
 

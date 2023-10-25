@@ -9,15 +9,17 @@ public:
     Position(Position&&) = default;
     Position& operator=(const Position&) = default;
     Position& operator=(Position&&) = default;
-    Position(unsigned int line, unsigned int col)
-        : line(line)
+    Position(std::string fileName, unsigned int line, unsigned int col)
+        : fileName(std::move(fileName))
+        , line(line)
         , col(col)
     {
     }
     Position() = default;
 
-    unsigned int line;
-    unsigned int col;
+    std::string fileName;
+    unsigned int line = 0;
+    unsigned int col = 1;
 
     std::string toString();
 };

@@ -498,7 +498,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push 0");
         } break;
         case UNDEFINED: {
-            std::cout << fmt::format("{}:{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", this->inputFileName, token.pos.toString());
+            std::cout << fmt::format("{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", token.pos.toString());
             std::exit(69);
         } break;
         } // switch (token.type)
@@ -574,11 +574,11 @@ void Parser::compileToNasmLinux86_64()
 
 void Parser::error(Token token, std::string msg)
 {
-    std::cerr << fmt::format("{}:{}: ERROR: {}.\n", this->inputFileName, token.pos.toString(), msg);
+    std::cerr << fmt::format("{}: ERROR: {}.\n", token.pos.toString(), msg);
     this->hadError = true;
 }
 
 void Parser::note(Token token, std::string msg)
 {
-    std::cout << fmt::format("{}:{}: NOTE: {}.\n", this->inputFileName, token.pos.toString(), msg);
+    std::cout << fmt::format("{}: NOTE: {}.\n", token.pos.toString(), msg);
 }

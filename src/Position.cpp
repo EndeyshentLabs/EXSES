@@ -4,5 +4,5 @@
 
 std::string Position::toString()
 {
-    return fmt::format("{}:{}", this->line + 1, this->col);
+    return fmt::format("{}:{}:{}", this->fileName, this->line + 1, this->col);
 }
