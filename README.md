@@ -71,6 +71,7 @@ Dependencies:
 
 - CMake >= 3.14
 - Any C++ compiler with C++20 (I use GCC 13.2)
+- [fmtlib](https://github.com/fmtlib/fmt). You can probably do something like `sudo apt install libfmt-dev`
 
 ```console
 $ cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release

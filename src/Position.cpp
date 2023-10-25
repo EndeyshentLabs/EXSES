@@ -1,8 +1,8 @@
 #include <Position.hpp>
 
-#include <format>
+#include <fmt/format.h>
 
 std::string Position::toString()
 {
-    return std::format("{}:{}", this->line + 1, this->col);
+    return fmt::format("{}:{}", this->line + 1, this->col);
 }

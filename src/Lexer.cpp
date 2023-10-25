@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <format>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -15,6 +14,8 @@
 #include <Token.hpp>
 #include <Value.hpp>
 #include <utils.hpp>
+
+#include <fmt/format.h>
 
 #define makeNote(tokenLike, text)                                                                                                                                    \
     do {                                                                                                                                                             \
@@ -141,7 +142,7 @@ void Lexer::run()
 #if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
-        std::printf("%s:%s: type: %s, text: `%s`, pairIp: %u\n", this->fileName.c_str(), token.pos.toString().c_str(), TokenTypeString[token.type].c_str(), token.text.c_str(), token.pairIp);
+        fmt::print("{}:{}: type: {}, text: `{}`, pairIp: {}\n", this->fileName, token.pos.toString(), TokenTypeString[token.type], token.text, token.pairIp);
     }
 #endif
 
@@ -186,7 +187,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::IF, ip));
         } else if (token.type == ENDIF) {
             if (blockStack.size() < 1) {
-                std::printf("%s:%s: ERROR: `ENDIF` without `IF`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDIF` without `IF`\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -194,7 +195,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (block.type != BlockType::IF) {
-                std::printf("%s:%s: ERROR: `ENDIF` can only close `IF` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDIF` can only close `IF` blocks!\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -205,7 +206,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::PROC, ip));
         } else if (token.type == ENDPROC) {
             if (blockStack.size() < 1) {
-                std::printf("%s:%s: ERROR: `ENDPROC` without `MAKEPROC`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDPROC` without `MAKEPROC`\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -213,7 +214,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (block.type != BlockType::PROC) {
-                std::printf("%s:%s: ERROR: `ENDPROC` can only close procedure body!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDPROC` can only close procedure body!\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -226,7 +227,7 @@ void Lexer::linkBlocks()
             blockStack.push_back(Block(BlockType::DOWHILE, ip));
         } else if (token.type == ENDWHILE) {
             if (blockStack.size() < 2) {
-                std::printf("%s:%s: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -234,7 +235,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (doWhile.type != BlockType::DOWHILE) {
-                std::printf("%s:%s: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -242,7 +243,7 @@ void Lexer::linkBlocks()
             blockStack.pop_back();
 
             if (whil.type != BlockType::WHILE) {
-                std::printf("%s:%s: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", this->fileName.c_str(), token.pos.toString().c_str());
+                fmt::print("{}:{}: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", this->fileName, token.pos.toString());
                 std::exit(1);
             }
 
@@ -261,7 +262,7 @@ void Lexer::linkBlocks()
         } else {
             msg = "Unexpected block closing.";
         }
-        std::printf("%s:%s: ERROR: %s.\n", this->fileName.c_str(), this->program[block.ip].pos.toString().c_str(), msg.c_str());
+        fmt::print("{}:{}: ERROR: {}.\n", this->fileName, this->program[block.ip].pos.toString(), msg);
         fail = true;
     }
 

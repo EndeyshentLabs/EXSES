@@ -39,6 +39,8 @@ target_compile_options(exsi PRIVATE
 )
 endif()
 
+target_link_libraries(exsi PRIVATE -lfmt)
+
 target_link_options(exsi PRIVATE
     $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3>
     $<$<CONFIG:RELEASE>:-O3>
