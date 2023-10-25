@@ -9,8 +9,8 @@
 #include <regex>
 #include <vector>
 
-#include <fmt/format.h>
 #include <fmt/color.h>
+#include <fmt/format.h>
 
 #define CMD(command)                                   \
     do {                                               \
