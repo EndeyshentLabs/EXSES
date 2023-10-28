@@ -219,26 +219,14 @@ void Parser::compileToNasmLinux86_64()
         case SAVE: {
             output.append(fmt::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
 
-            if ((int)ip - 1 < 0)
-                error(token, "Expected binding name as IDENT but got nothing");
-
-            Token& name = this->program.at(ip - 1);
-
-            if (name.type != IDENT)
-                error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
-            name.processedByParser = true;
-
-            if (!bindings.contains(name.value.text)) {
-                error(token, fmt::format("Binding '{}' is not defined", name.value.text));
-            }
-
-            std::string cast;
-
             output.append("    pop r11\n");
-            output.append(fmt::format("    mov [{}], r11\n", name.value.text));
+            output.append("    pop r12\n");
+            output.append("    mov [r11], r12\n");
         } break;
         case LOAD: {
             output.append(fmt::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
+
+            error(token, "LOAD operation is deprecated");
 
             LOAD_COMMON();
 
@@ -485,9 +473,11 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push rax\n");
         } break;
         case IDENT: {
-            // TODO: Learn how to set `processedByParser` by reference
-            if (!token.processedByParser) {
-                // error(token, fmt::format("Unexpected IDENT '{}'", token.value.text));
+            if (bindings.contains(token.value.text) && this->program[ip + 1].type != MAKEPROC && this->program[ip + 1].type != INVOKEPROC) {
+                output.append(fmt::format("addr_{}: ;; {}: IDENT as LOAD\n", ip, token.pos.toString()));
+
+                output.append(fmt::format("    mov r11, {}\n", token.value.text));
+                output.append("    push r11\n");
             }
         } break;
         case TRUE: {

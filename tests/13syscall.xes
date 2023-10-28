@@ -4,7 +4,7 @@ msg qword <-
 
 1         >rax
 1         >rdi
-msg ^ ^64 >rsi
+msg ^64 >rsi
 13        >rdx
 \syscall _
 

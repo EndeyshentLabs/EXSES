@@ -10,4 +10,4 @@ strlen '
 msg word <-
 [Hello] msg <!
 
-msg ^ ^64 strlen : !
+msg ^64 strlen : !

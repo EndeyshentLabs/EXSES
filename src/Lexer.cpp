@@ -42,10 +42,10 @@ Lexer::Lexer(std::string fileName, Target target)
         std::exit(1);
     }
 
+    this->cursor = 0;
     this->curChar = this->source[0];
 
-    this->pos.col = 0;
-    this->pos.fileName = fileName;
+    this->pos = Position(fileName, 0, 0);
     this->run();
 }
 
@@ -53,8 +53,8 @@ void Lexer::advance()
 {
     this->cursor++;
 
-    if (this->source[cursor] == 0) { // NOTE: Unsafe
-        this->curChar = 0;
+    if (this->cursor > this->source.size() - 1) {
+        this->curChar = '\0';
         return;
     }
 

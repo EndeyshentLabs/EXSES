@@ -30,7 +30,7 @@ private:
     std::string fileName;
     std::vector<Token> program;
     std::vector<Value> stack;
-    char curChar = source[0];
+    char curChar;
     Position pos;
     unsigned int cursor;
 
@@ -42,8 +42,5 @@ private:
 
     void linkBlocks();
 };
-
-template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
-void printTokenLineInfo(T token);
 
 #endif /* EXSES_LEXER_H */
