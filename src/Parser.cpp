@@ -37,7 +37,6 @@ std::map<std::string, BindingSize> bindings;
     Token& name = this->program.at(ip - 1);                                                                 \
     if (name.type != IDENT)                                                                                 \
         error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type])); \
-    name.processedByParser = true;                                                                          \
     if (!bindings.contains(name.value.text)) {                                                              \
         error(token, fmt::format("Binding '{}' is not defined", name.value.text));                          \
     }                                                                                                       \
@@ -180,9 +179,8 @@ void Parser::compileToNasmLinux86_64()
 
             Token& size = this->program.at(ip - 1);
 
-            if (size.type != IDENT)
-                error(token, fmt::format("Expected size name as IDENT but got {}", TokenTypeString[size.type]));
-            size.processedByParser = true;
+            if (size.type != SIZE)
+                error(token, fmt::format("Expected size name as SIZE but got {}", TokenTypeString[size.type]));
 
             if ((int)ip - 2 < 0)
                 error(token, "Expected binding name as IDENT but got nothing");
@@ -191,20 +189,19 @@ void Parser::compileToNasmLinux86_64()
 
             if (name.type != IDENT)
                 error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
-            name.processedByParser = true;
 
             BindingSize bindingSize;
 
-            if (size.value.text == "byte") {
+            if (size.text == "byte") {
                 bindingSize = BindingSize::BYTE;
-            } else if (size.value.text == "word") {
+            } else if (size.text == "word") {
                 bindingSize = BindingSize::WORD;
-            } else if (size.value.text == "dword") {
+            } else if (size.text == "dword") {
                 bindingSize = BindingSize::DWORD;
-            } else if (size.value.text == "qword") {
+            } else if (size.text == "qword") {
                 bindingSize = BindingSize::QWORD;
             } else {
-                error(token, fmt::format("Unknown binding size '{}'", size.value.text));
+                error(token, fmt::format("Unknown binding size '{}'", size.text));
             }
 
             if (bindings.contains(name.value.text)) {
@@ -277,7 +274,6 @@ void Parser::compileToNasmLinux86_64()
 
             if (name.type != IDENT)
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
-            name.processedByParser = true;
 
             if (procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure with the name '{}' was alreay defined", name.value.text));
@@ -313,7 +309,6 @@ void Parser::compileToNasmLinux86_64()
 
             if (name.type != IDENT)
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
-            name.processedByParser = true;
 
             if (!procs.contains(name.value.text))
                 error(token, fmt::format("Procedure '{}' is not defined", name.value.text));
@@ -473,11 +468,25 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push rax\n");
         } break;
         case IDENT: {
-            if (bindings.contains(token.value.text) && this->program[ip + 1].type != MAKEPROC && this->program[ip + 1].type != INVOKEPROC) {
-                output.append(fmt::format("addr_{}: ;; {}: IDENT as LOAD\n", ip, token.pos.toString()));
+            if ((ip + 1 <= this->program.size() - 1 && this->program[ip + 1].type != MAKEPROC && this->program[ip + 1].type != INVOKEPROC)
+                || (ip + 2 <= this->program.size() - 1 && this->program[ip + 2].type != BIND)) {
+                if (bindings.contains(token.value.text)
+                    && ip + 2 <= this->program.size() - 1
+                    && this->program[ip + 1].type != MAKEPROC
+                    && this->program[ip + 1].type != INVOKEPROC
+                    && this->program[ip + 2].type != BIND) {
+                    output.append(fmt::format("addr_{}: ;; {}: IDENT as LOAD\n", ip, token.pos.toString()));
 
-                output.append(fmt::format("    mov r11, {}\n", token.value.text));
-                output.append("    push r11\n");
+                    output.append(fmt::format("    mov r11, {}\n", token.value.text));
+                    output.append("    push r11\n");
+                }
+            } else {
+                error(token, "Unexpected IDENT");
+            }
+        } break;
+        case SIZE: {
+            if (ip + 1 <= this->program.size() - 1 && this->program[ip + 1].type != BIND) {
+                error(token, "Unexpected SIZE");
             }
         } break;
         case TRUE: {

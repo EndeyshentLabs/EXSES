@@ -30,6 +30,7 @@ enum TokenType {
     LOAD16,
     LOAD32,
     LOAD64,
+    SIZE,
     TERNARY,
     MAKEPROC,
     ENDPROC,
@@ -89,6 +90,7 @@ static const std::string TokenTypeString[] = {
     "LOAD16",
     "LOAD32",
     "LOAD64",
+    "SIZE",
     "TERNARY",
     "MAKEPROC",
     "ENDPROC",
@@ -144,6 +146,10 @@ static const std::vector<std::string> Keywords = {
     "^16",
     "^32",
     "^64",
+    "byte",
+    "word",
+    "dword",
+    "qword",
     ".?",
     "'",
     "\"",
@@ -195,8 +201,6 @@ struct Token {
     TokenType type;
     const std::string text;
     Value value;
-    // For IDENTs
-    bool processedByParser;
     // Only for blocks
     unsigned int pairIp = 0;
 };
