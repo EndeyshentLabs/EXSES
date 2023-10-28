@@ -565,11 +565,11 @@ void Parser::compileToNasmLinux86_64()
 
 void Parser::error(Token token, std::string msg)
 {
-    std::cerr << fmt::format("{}: ERROR: {}.\n", token.pos.toString(), msg);
+    fmt::print("{}: ERROR: {}.\n", token.pos.toString(), msg);
     this->hadError = true;
 }
 
 void Parser::note(Token token, std::string msg)
 {
-    std::cout << fmt::format("{}: NOTE: {}.\n", token.pos.toString(), msg);
+    fmt::print("{}: NOTE: {}.\n", token.pos.toString(), msg);
 }
