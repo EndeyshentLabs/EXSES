@@ -70,9 +70,18 @@ void Parser::compileToNasmLinux86_64()
     std::string outputFilepath(std::regex_replace(inputFileName, std::regex("\\.xes$"), ".asm"));
     std::string output("BITS 64\n"
                        "extern printf\n"
-                       "extern puts\n"
+                       // "extern puts\n"
                        "global _start\n"
                        "section .text\n"
+                       "stringLenght:\n"
+                       "    mov rbx, 0\n"
+                       ".loop:\n"
+                       "    cmp BYTE [rax + rbx], 0\n"
+                       "    je .end\n"
+                       "    inc rbx\n"
+                       "    jmp .loop\n"
+                       ".end:\n"
+                       "    ret\n"
                        "_start:\n"
                        "    mov rax, saved_rsp_end\n"
                        "    mov [saved_rsp], rax\n");
@@ -86,20 +95,25 @@ void Parser::compileToNasmLinux86_64()
 
         switch (token.type) {
         case PUSH: {
-            output.append(fmt::format("addr_{}: ;; {}: PUSH {}\n", ip, token.pos.toString(), std::stoi(token.value.text)));
+            output.append(fmt::format("addr_{}: ;; {}: PUSH {}\n", ip, token.pos.toString(), token.value.text));
             output.append(fmt::format("    mov r11, {}\n", token.value.text));
             output.append("    push r11\n");
         } break;
         case STRING: {
-            output.append(fmt::format("addr_{}: ;; {}: STRING {}\n", ip, token.pos.toString(), token.value.text));
+            output.append(fmt::format("addr_{}: ;; {}: STRING {}\n", ip, token.pos.toString(), token.text));
             output.append(fmt::format("    push str_{}\n", stringStorage.size()));
             stringStorage.push_back(token.value.text);
         } break;
         case STRING_DUMP: {
             output.append(fmt::format("addr_{}: ;; {}: STRING_DUMP\n", ip, token.pos.toString()));
-            output.append("    pop rdi\n");
-            output.append("    xor eax, eax\n");
-            output.append("    call puts\n");
+            output.append("    pop r11\n");
+            output.append("    mov rax, r11\n");
+            output.append("    call stringLenght\n");
+            output.append("    mov rdx, rbx\n");
+            output.append("    mov rax, 1\n");
+            output.append("    mov rdi, 1\n");
+            output.append("    mov rsi, r11\n");
+            output.append("    syscall\n");
         } break;
         case STRING_PLUS: {
             output.append(fmt::format("addr_{}: ;; {}: STRING_PLUS\n", ip, token.pos.toString()));

@@ -107,15 +107,43 @@ Token Lexer::makeString()
 {
     std::string buf;
     Position startPos(this->pos);
+    unsigned int savedCursor = this->cursor;
 
     this->advance();
 
     while (this->curChar != ']' && this->curChar != 0) {
-        buf.push_back(this->curChar);
-        this->advance();
+        if (this->curChar == '\\') {
+            this->advance();
+            switch (this->curChar) {
+            case ']':
+                buf.push_back(']');
+                break;
+            case 'n':
+                buf.push_back('\n');
+                break;
+            case 'r':
+                buf.push_back('\r');
+                break;
+            case 't':
+                buf.push_back('\t');
+                break;
+            case 'v':
+                buf.push_back('\v');
+                break;
+            default:
+                fmt::print("{}: ERROR: Unknown escaping {}.\n", startPos.toString(), this->curChar);
+                break;
+            }
+            this->advance();
+            if (this->curChar == ']' || this->curChar == 0)
+                break;
+        } else {
+            buf.push_back(this->curChar);
+            this->advance();
+        }
     }
 
-    return Token(startPos, STRING, buf, Value(ValueType::STRING, buf));
+    return Token(startPos, STRING, this->source.substr(savedCursor, this->cursor - savedCursor + 1), Value(ValueType::STRING, buf));
 }
 
 Token Lexer::makeIdentifier()

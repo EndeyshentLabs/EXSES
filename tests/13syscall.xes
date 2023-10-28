@@ -1,11 +1,11 @@
 # output: Hello, World!
 msg qword <-
-[Hello, World!] msg <!
+[Hello, World!\n] msg <!
 
 1         >rax
 1         >rdi
 msg ^64 >rsi
-13        >rdx
+14        >rdx
 \syscall _
 
 60 >rax

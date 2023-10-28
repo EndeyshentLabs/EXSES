@@ -2,6 +2,8 @@
 # output: It
 # output: Works!
 # output: Nothing?
-[Endeyshent Laboratories] s!
-[It\nWorks!] s!
-[Secret\rNothing?] s!
+# output: String in [string]?
+[Endeyshent Laboratories\n] s!
+[It\nWorks!\n] s!
+[Secret\rNothing?\n] s!
+[String in [string\]?\n] s!
