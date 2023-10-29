@@ -6,7 +6,7 @@ syntax keyword xesTodo contained TODO FIXME XXX NOTE
 
 syntax region xesCommentLine start="#" end="$" display contains=xesTodo
 
-" syntax match xesSpecial contained '\\[nrs+]'
+syntax match xesSpecial contained '\\[nrtv\]]'
 syntax region xesString start='\[' end=']' display contains=xesSpecial
 
 syntax match xesOperators '+'
@@ -16,6 +16,7 @@ syntax match xesOperators '/'
 syntax match xesOperators '&'
 syntax match xesOperators '\$&'
 syntax match xesOperators '\$'
+syntax match xesOperators '_'
 syntax match xesOperators '!'
 syntax match xesOperators '<-'
 syntax match xesOperators '\^'
