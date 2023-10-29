@@ -793,7 +793,7 @@ void Parser::intrepret()
             Value over = stack.back();
             stack.pop_back();
 
-            stack.push_back(Value(ValueType::INT, std::to_string(top == over)));
+            stack.push_back(Value(ValueType::INT, std::to_string(top.text == over.text)));
 
             ip++;
         } break;
@@ -803,7 +803,7 @@ void Parser::intrepret()
             Value over = stack.back();
             stack.pop_back();
 
-            stack.push_back(Value(ValueType::INT, std::to_string(top != over)));
+            stack.push_back(Value(ValueType::INT, std::to_string(top.text != over.text)));
 
             ip++;
         } break;
