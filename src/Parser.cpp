@@ -875,7 +875,8 @@ void Parser::intrepret()
             ip++;
         } break;
         case UNDEFINED: {
-            error(token, "UwU");
+            std::cout << fmt::format("{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", token.pos.toString());
+            std::exit(69);
         } break;
         } // switch (token.type)
 
