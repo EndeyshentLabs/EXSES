@@ -39,6 +39,7 @@ private:
     bool hadError = false;
 
     void compileToNasmLinux86_64();
+    void intrepret();
     void error(Token token, std::string msg);
     void note(Token token, std::string msg);
 };

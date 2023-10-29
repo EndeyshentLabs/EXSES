@@ -41,8 +41,7 @@ void Parser::parse()
 {
     switch (this->target) {
     case EXSI:
-        std::cout << "ERROR: Intrepreting is not supported!\n";
-        std::exit(1);
+        this->intrepret();
         break;
     case NASM_LINUX_X86_64:
         this->compileToNasmLinux86_64();
@@ -568,6 +567,323 @@ void Parser::compileToNasmLinux86_64()
     // TODO: Should stop compilation if failed
     CMD(fmt::format("nasm -g -felf64 {}", outputFilepath));
     CMD(fmt::format("ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o {} {} -lc", std::regex_replace(outputFilepath, std::regex("\\.asm$"), ""), std::regex_replace(outputFilepath, std::regex("\\.asm$"), ".o")));
+}
+
+void Parser::intrepret()
+{
+    std::vector<Value> stack;
+
+    while (ip < program.size()) {
+        Token& token = this->program[ip];
+
+        switch (token.type) {
+        case PUSH: {
+            stack.push_back(Value(ValueType::INT, token.value.text));
+
+            ip++;
+        } break;
+        case STRING: {
+            stack.push_back(Value(ValueType::STRING, token.value.text));
+
+            ip++;
+        } break;
+        case DUMP:
+        case STRING_DUMP: {
+            Value a = stack.back();
+            stack.pop_back();
+
+            std::cout << a.text;
+
+            ip++;
+        } break;
+        case STRING_PLUS: {
+        } break;
+        case DUP: {
+            stack.push_back(stack.back());
+
+            ip++;
+        } break;
+        case OVER: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(over);
+            stack.push_back(top);
+            stack.push_back(over);
+
+            ip++;
+        } break;
+        case DROP: {
+            stack.pop_back();
+
+            ip++;
+        } break;
+        case SWAP: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(top);
+            stack.push_back(over);
+
+            ip++;
+        } break;
+        case PLUS: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(top.text) + std::stol(over.text))));
+
+            ip++;
+        } break;
+        case MINUS: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) - std::stol(top.text))));
+
+            ip++;
+        } break;
+        case MULT: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(top.text) * std::stol(over.text))));
+
+            ip++;
+        } break;
+        case DIV: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) / std::stol(top.text))));
+
+            ip++;
+        } break;
+        case INPUT: {
+            error(token, "INPUT is not implemented yet");
+
+            ip++;
+        } break;
+        case BIND: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case SAVE: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case LOAD8: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case LOAD16: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case LOAD32: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case LOAD64: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case SIZE: {
+            error(token, "Bindings are not implemented yet");
+
+            ip++;
+        } break;
+        case TERNARY: {
+            error(token, "Ternary operator is not implemented yet");
+
+            ip++;
+        } break;
+        case MAKEPROC: {
+            error(token, "Procedures are not implemented yet");
+
+            ip++;
+        } break;
+        case ENDPROC: {
+            error(token, "Procedures are not implemented yet");
+
+            ip++;
+        } break;
+        case INVOKEPROC: {
+            error(token, "Procedures are not implemented yet");
+
+            ip++;
+        } break;
+        case IF: {
+            error(token, "Conditions are not implemented yet");
+
+            ip++;
+        } break;
+        case ENDIF: {
+            error(token, "Conditions are not implemented yet");
+
+            ip++;
+        } break;
+        case WHILE: {
+            error(token, "Conditions are not implemented yet");
+
+            ip++;
+        } break;
+        case DOWHILE: {
+            error(token, "Conditions are not implemented yet");
+
+            ip++;
+        } break;
+        case ENDWHILE: {
+            error(token, "Conditions are not implemented yet");
+
+            ip++;
+        } break;
+        case EQUAL: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(top == over)));
+
+            ip++;
+        } break;
+        case NOTEQUAL: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(top != over)));
+
+            ip++;
+        } break;
+        case LESS: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) < std::stol(top.text))));
+
+            ip++;
+        } break;
+        case LESSEQUAL: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) <= std::stol(top.text))));
+
+            ip++;
+        } break;
+        case GREATER: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) > std::stol(top.text))));
+
+            ip++;
+        } break;
+        case GREATEREQUAL: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) >= std::stol(top.text))));
+
+            ip++;
+        } break;
+        case LOR: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) || std::stol(top.text))));
+
+            ip++;
+        } break;
+        case LAND: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) && std::stol(top.text))));
+
+            ip++;
+        } break;
+        case LNOT: {
+            Value top = stack.back();
+            stack.pop_back();
+
+            stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(top.text))));
+
+            ip++;
+        } break;
+        case TRUE: {
+            stack.push_back(Value(ValueType::INT, "1"));
+
+            ip++;
+        } break;
+        case FALSE: {
+            stack.push_back(Value(ValueType::INT, "0"));
+
+            ip++;
+        } break;
+        case TORAX:
+        case TORBX:
+        case TORCX:
+        case TORDX:
+        case TORSI:
+        case TORDI:
+        case TORBP:
+        case TOR8:
+        case TOR9:
+        case TOR10: {
+            error(token, "Register manipulation is not available in Intrepretaton mode");
+        } break;
+        case SYSTEM_SYSCALL: {
+            error(token, "Syscalls is not available int Intrepretaton mode");
+        } break;
+        case IDENT: {
+            error(token, "IDENTs are not implemented yet");
+
+            ip++;
+        } break;
+        case UNDEFINED: {
+            error(token, "UwU");
+        } break;
+        } // switch (token.type)
+
+        if (this->hadError) {
+            std::cout << "INFO: Intrepretaton \033[31;1mterminated\033[0m\n";
+            std::exit(1);
+        }
+    } // while
 }
 
 void Parser::error(Token token, std::string msg)
