@@ -31,8 +31,6 @@ TokenType tokenTypeFromString(std::string str)
         return BIND;
     } else if (str == "<!") {
         return SAVE;
-    } else if (str == "^") {
-        return LOAD;
     } else if (str == "^8") {
         return LOAD8;
     } else if (str == "^16") {

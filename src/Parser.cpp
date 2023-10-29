@@ -18,18 +18,13 @@
         std::system((command).c_str());                \
     } while (0)
 
-enum class BindingSize {
-    BYTE = 8,
-    WORD = 16,
-    DWORD = 32,
-    QWORD = 64
+struct BindingInfo {
+    BindingSize size;
+    InstructionAddr addr;
 };
 
-#define STR_(x) #x
-#define STR(x) STR_(x)
-
-std::map<std::string, unsigned int> procs;
-std::map<std::string, BindingSize> bindings;
+std::map<std::string, InstructionAddr> procs;
+std::map<std::string, BindingInfo> bindings;
 
 #define LOAD_COMMON()                                                                                       \
     if ((int)ip - 1 < 0)                                                                                    \
@@ -204,7 +199,7 @@ void Parser::compileToNasmLinux86_64()
             if (name.type != IDENT)
                 error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
 
-            BindingSize bindingSize;
+            BindingSize bindingSize = BindingSize::BYTE;
 
             if (size.text == "byte") {
                 bindingSize = BindingSize::BYTE;
@@ -225,7 +220,7 @@ void Parser::compileToNasmLinux86_64()
                 error(token, fmt::format("Procedure with the same name exist", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
             }
-            bindings.insert({ name.value.text, bindingSize });
+            bindings.insert({ name.value.text, BindingInfo(bindingSize, ip) });
         } break;
         case SAVE: {
             output.append(fmt::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
@@ -233,16 +228,6 @@ void Parser::compileToNasmLinux86_64()
             output.append("    pop r11\n");
             output.append("    pop r12\n");
             output.append("    mov [r11], r12\n");
-        } break;
-        case LOAD: {
-            output.append(fmt::format("addr_{}: ;; {}: LOAD\n", ip, token.pos.toString()));
-
-            error(token, "LOAD operation is deprecated");
-
-            LOAD_COMMON();
-
-            output.append(fmt::format("    mov r11, {}\n", name.value.text));
-            output.append("    push r11\n");
         } break;
         case LOAD8: {
             output.append(fmt::format("addr_{}: ;; {}: LOAD8\n", ip, token.pos.toString()));
@@ -482,18 +467,15 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push rax\n");
         } break;
         case IDENT: {
-            if ((ip + 1 <= this->program.size() - 1 && this->program[ip + 1].type != MAKEPROC && this->program[ip + 1].type != INVOKEPROC)
-                || (ip + 2 <= this->program.size() - 1 && this->program[ip + 2].type != BIND)) {
-                if (bindings.contains(token.value.text)
-                    && ip + 2 <= this->program.size() - 1
-                    && this->program[ip + 1].type != MAKEPROC
-                    && this->program[ip + 1].type != INVOKEPROC
-                    && this->program[ip + 2].type != BIND) {
-                    output.append(fmt::format("addr_{}: ;; {}: IDENT as LOAD\n", ip, token.pos.toString()));
+            if ((ip + 1 <= this->program.size() - 1 && (this->program[ip + 1].type == INVOKEPROC || this->program[ip + 1].type == MAKEPROC))
+                || (ip + 2 <= this->program.size() - 1 && this->program[ip + 2].type == BIND))
+                break;
 
-                    output.append(fmt::format("    mov r11, {}\n", token.value.text));
-                    output.append("    push r11\n");
-                }
+            if (bindings.contains(token.value.text)) {
+                output.append(fmt::format("addr_{}: ;; {}: IDENT as LOAD\n", ip, token.pos.toString()));
+
+                output.append(fmt::format("    mov r11, binding_{}\n", bindings.at(token.value.text).addr));
+                output.append("    push r11\n");
             } else {
                 error(token, "Unexpected IDENT");
             }
@@ -549,8 +531,10 @@ void Parser::compileToNasmLinux86_64()
         output.append("    saved_rsp_offset: resb 65536\n");
         output.append("    saved_rsp_end:\n");
 
-        for (auto const& [name, size] : bindings) {
+        for (auto const& [name, info] : bindings) {
+            BindingSize size = info.size;
             char mnemonic;
+
             switch (size) {
             case BindingSize::BYTE:
                 mnemonic = 'b';
@@ -566,7 +550,7 @@ void Parser::compileToNasmLinux86_64()
                 break;
             }
 
-            output.append(fmt::format("    {}: res{} 1\n", name, mnemonic));
+            output.append(fmt::format("    binding_{}: res{} 1\n", info.addr, mnemonic));
         }
     }
 

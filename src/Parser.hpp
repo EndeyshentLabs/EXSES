@@ -6,6 +6,15 @@
 #include <Lexer.hpp>
 #include <Token.hpp>
 
+typedef unsigned int InstructionAddr;
+
+enum class BindingSize {
+    BYTE = 8,
+    WORD = 16,
+    DWORD = 32,
+    QWORD = 64
+};
+
 class Parser {
 public:
     Parser(Target target, std::string inputFileName, std::vector<Token> program)
@@ -25,7 +34,7 @@ public:
 
 private:
     std::string inputFileName;
-    unsigned int ip = 0;
+    InstructionAddr ip = 0;
     std::vector<Token> program;
     bool hadError = false;
 
