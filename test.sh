@@ -37,15 +37,14 @@ function test_folder {
             continue
         fi
         local output=`cat $f | grep '^# output: ' | sed 's/^# output: //g'`
-        ./release/exsi nasm-linux-x86_64 "$f"
-        local real=`echo "./$f" | sed 's/\.xes//g'`
-        if [ ! "`$real`" = "$output" ]
+        local real="`./release/exsi exsi "$f"`"
+        if [ ! "$real" = "$output" ]
         then
             printf "\e[31mFAILED!\e[0m\n"
             printf "Expected:\n"
             printf "$output\n"
             printf "Got:\n"
-            printf "`$real`\n"
+            printf "$real\n"
             failed=$((failed+1))
             has_failed=1
         else

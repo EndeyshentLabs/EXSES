@@ -1,7 +1,6 @@
 # output: 56
 # output: 88
-# output: Hello, 
-# output: EndeyshentLabs
+# output: Hello, EndeyshentLabs
 Do56 ' 56 ! "
 
 Do56 :
