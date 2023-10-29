@@ -571,6 +571,7 @@ void Parser::compileToNasmLinux86_64()
 
 void Parser::intrepret()
 {
+    std::vector<InstructionAddr> returnAddrStack;
     std::vector<Value> stack;
 
     while (ip < program.size()) {
@@ -592,11 +593,12 @@ void Parser::intrepret()
             Value a = stack.back();
             stack.pop_back();
 
-            std::cout << a.text;
+            std::cout << a.text << (a.type == ValueType::INT ? "\n" : "");
 
             ip++;
         } break;
         case STRING_PLUS: {
+            error(token, "STRING_PLUS is not implemented yet");
         } break;
         case DUP: {
             stack.push_back(stack.back());
@@ -717,44 +719,73 @@ void Parser::intrepret()
             ip++;
         } break;
         case MAKEPROC: {
-            error(token, "Procedures are not implemented yet");
+            if ((int)ip - 1 < 0)
+                error(token, "Expected function name as IDENT but got nothing");
 
-            ip++;
+            Token& name = this->program.at(ip - 1);
+
+            if (name.type != IDENT)
+                error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+
+            if (procs.contains(name.value.text)) {
+                error(token, fmt::format("Procedure with the name '{}' was alreay defined", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
+            } else if (bindings.contains(name.value.text)) {
+                error(token, fmt::format("Binding with the same name exist", name.value.text));
+                note(this->program[procs.at(name.value.text)], "Defined here");
+            }
+
+            procs.insert({ name.value.text, ip });
+
+            ip = token.pairIp + 1;
         } break;
         case ENDPROC: {
-            error(token, "Procedures are not implemented yet");
-
-            ip++;
+            ip = returnAddrStack.back() + 1;
+            returnAddrStack.pop_back();
         } break;
         case INVOKEPROC: {
-            error(token, "Procedures are not implemented yet");
+            if ((int)ip - 1 < 0)
+                error(token, "Expected function name as IDENT but got nothing");
 
-            ip++;
+            Token& name = this->program.at(ip - 1);
+
+            if (name.type != IDENT)
+                error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+
+            if (!procs.contains(name.value.text))
+                error(token, fmt::format("Procedure '{}' is not defined", name.value.text));
+
+            returnAddrStack.push_back(ip);
+            ip = procs.at(name.value.text) + 1;
         } break;
         case IF: {
-            error(token, "Conditions are not implemented yet");
+            Value cond = stack.back();
+            stack.pop_back();
 
-            ip++;
+            if (!std::stol(cond.text)) {
+                ip = token.pairIp + 1;
+            } else {
+                ip++;
+            }
         } break;
         case ENDIF: {
-            error(token, "Conditions are not implemented yet");
-
             ip++;
         } break;
         case WHILE: {
-            error(token, "Conditions are not implemented yet");
-
             ip++;
         } break;
         case DOWHILE: {
-            error(token, "Conditions are not implemented yet");
+            Value cond = stack.back();
+            stack.pop_back();
 
-            ip++;
+            if (!std::stol(cond.text)) {
+                ip = token.pairIp + 1;
+            } else {
+                ip++;
+            }
         } break;
         case ENDWHILE: {
-            error(token, "Conditions are not implemented yet");
-
-            ip++;
+            ip = token.pairIp;
         } break;
         case EQUAL: {
             Value top = stack.back();
@@ -870,7 +901,7 @@ void Parser::intrepret()
             error(token, "Syscalls is not available int Intrepretaton mode");
         } break;
         case IDENT: {
-            error(token, "IDENTs are not implemented yet");
+            // error(token, "IDENTs are not implemented yet");
 
             ip++;
         } break;
