@@ -14,7 +14,7 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 ### Hello, World!
 
 ```python
-[Hello, World!] s!
+[Hello, World!\n] s!
 ```
 
 ### Basic
