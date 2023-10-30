@@ -41,10 +41,10 @@ EXSES - smol stack-oriented concatenative programming language. Development have
 
 ```python
 # bind 500 to 'FiveOO'
-FiveOO qword <-
+FiveOO <- |~ 8 ~| # allocate 8 bytes (64 bits)
 500 FiveOO <!
 # bind 80 to 'EightO'
-EightO qword <-
+EightO <- |~ 8 ~|
 80 EightO <!
 
 # load value of 'FiveOO' (e.g 500)

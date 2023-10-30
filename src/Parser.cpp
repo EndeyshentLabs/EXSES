@@ -1,3 +1,4 @@
+#include "Value.hpp"
 #include <Parser.hpp>
 
 #include <Lexer.hpp>
@@ -19,7 +20,7 @@
     } while (0)
 
 struct BindingInfo {
-    BindingSize size;
+    unsigned long size;
     InstructionAddr addr;
 };
 
@@ -27,13 +28,18 @@ std::map<std::string, InstructionAddr> procs;
 std::map<std::string, BindingInfo> bindings;
 
 #define LOAD_COMMON()                                                                                       \
-    if ((int)ip - 1 < 0)                                                                                    \
+    if ((int)ip - 1 < 0) {                                                                                  \
         error(token, "Expected binding name as IDENT but got nothing");                                     \
+        break;                                                                                              \
+    }                                                                                                       \
     Token& name = this->program.at(ip - 1);                                                                 \
-    if (name.type != IDENT)                                                                                 \
+    if (name.type != IDENT) {                                                                               \
         error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type])); \
+        break;                                                                                              \
+    }                                                                                                       \
     if (!bindings.contains(name.value.text)) {                                                              \
         error(token, fmt::format("Binding '{}' is not defined", name.value.text));                          \
+        break;                                                                                              \
     }                                                                                                       \
     (void)NULL
 
@@ -182,44 +188,51 @@ void Parser::compileToNasmLinux86_64()
         case BIND: {
             output.append(fmt::format("addr_{}: ;; {}: BIND\n", ip, token.pos.toString()));
 
-            if ((int)ip - 1 < 0)
-                error(token, "Expected binding size as IDENT but got nothing");
-
-            Token& size = this->program.at(ip - 1);
-
-            if (size.type != SIZE)
-                error(token, fmt::format("Expected size name as SIZE but got {}", TokenTypeString[size.type]));
-
-            if ((int)ip - 2 < 0)
+            if ((int)ip - 1 < 0) {
                 error(token, "Expected binding name as IDENT but got nothing");
-
-            Token& name = this->program.at(ip - 2);
-
-            if (name.type != IDENT)
-                error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
-
-            BindingSize bindingSize = BindingSize::BYTE;
-
-            if (size.text == "byte") {
-                bindingSize = BindingSize::BYTE;
-            } else if (size.text == "word") {
-                bindingSize = BindingSize::WORD;
-            } else if (size.text == "dword") {
-                bindingSize = BindingSize::DWORD;
-            } else if (size.text == "qword") {
-                bindingSize = BindingSize::QWORD;
-            } else {
-                error(token, fmt::format("Unknown binding size '{}'", size.text));
+                break;
             }
+
+            Token& name = this->program.at(ip - 1);
+
+            if (name.type != IDENT) {
+                error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type]));
+                break;
+            }
+
+            if (ip + 1 > this->program.size() - 1) {
+                error(token, "Expected binding size as constexpr but got nothing");
+                break;
+            }
+
+            Token& sizeConstExpr = this->program.at(ip + 1);
+
+            if (sizeConstExpr.type != MAKECONSTEXPR) {
+                error(token, fmt::format("Expected binding name as constexpr but got {}", TokenTypeString[sizeConstExpr.type]));
+                break;
+            }
+
+            Value sizeValue = evalConstExpr(ip + 1, sizeConstExpr.pairIp);
+
+            if (sizeValue.text[0] == '-') {
+                error(token, "Binding size expected to be positive but got negative");
+                note(this->program[ip + 1], "In this evaluated constant expression");
+                break;
+            }
+
+            unsigned long size = std::stoul(sizeValue.text);
 
             if (bindings.contains(name.value.text)) {
                 error(token, fmt::format("Binding with the name '{}' was alreay defined", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             } else if (procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure with the same name exist", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             }
-            bindings.insert({ name.value.text, BindingInfo(bindingSize, ip) });
+
+            bindings.insert({ name.value.text, BindingInfo(size, ip) });
         } break;
         case SAVE: {
             output.append(fmt::format("addr_{}: ;; {}: SAVE\n", ip, token.pos.toString()));
@@ -265,20 +278,26 @@ void Parser::compileToNasmLinux86_64()
             error(token, "Ternary operator is not implemented in NASM_LINUX_X86_64 target");
         } break;
         case MAKEPROC: {
-            if ((int)ip - 1 < 0)
+            if ((int)ip - 1 < 0) {
                 error(token, "Expected function name as IDENT but got nothing");
+                break;
+            }
 
             Token& name = this->program.at(ip - 1);
 
-            if (name.type != IDENT)
+            if (name.type != IDENT) {
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+                break;
+            }
 
             if (procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure with the name '{}' was alreay defined", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             } else if (bindings.contains(name.value.text)) {
                 error(token, fmt::format("Binding with the same name exist", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             }
 
             procs.insert({ name.value.text, ip });
@@ -300,16 +319,22 @@ void Parser::compileToNasmLinux86_64()
         } break;
         case INVOKEPROC: {
             output.append(fmt::format("addr_{}: ;; {}: INVOKEPROC\n", ip, token.pos.toString()));
-            if ((int)ip - 1 < 0)
+            if ((int)ip - 1 < 0) {
                 error(token, "Expected function name as IDENT but got nothing");
+                break;
+            }
 
             Token& name = this->program.at(ip - 1);
 
-            if (name.type != IDENT)
+            if (name.type != IDENT) {
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+                break;
+            }
 
-            if (!procs.contains(name.value.text))
+            if (!procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure '{}' is not defined", name.value.text));
+                break;
+            }
 
             output.append("    mov rax, rsp\n");
             output.append("    mov rsp, [saved_rsp]\n");
@@ -466,8 +491,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push rax\n");
         } break;
         case IDENT: {
-            if ((ip + 1 <= this->program.size() - 1 && (this->program[ip + 1].type == INVOKEPROC || this->program[ip + 1].type == MAKEPROC))
-                || (ip + 2 <= this->program.size() - 1 && this->program[ip + 2].type == BIND))
+            if ((ip + 1 <= this->program.size() - 1 && (this->program[ip + 1].type == INVOKEPROC || this->program[ip + 1].type == MAKEPROC || this->program[ip + 1].type == BIND)))
                 break;
 
             if (bindings.contains(token.value.text)) {
@@ -479,9 +503,14 @@ void Parser::compileToNasmLinux86_64()
                 error(token, "Unexpected IDENT");
             }
         } break;
-        case SIZE: {
-            if (ip + 1 <= this->program.size() - 1 && this->program[ip + 1].type != BIND) {
-                error(token, "Unexpected SIZE");
+        case MAKECONSTEXPR: {
+            if ((int)ip - 1 < 0 || this->program[ip - 1].type != BIND) {
+                error(token, "Unexpected evaluated constant expression");
+            }
+        } break;
+        case ENDCONSTEXPR: {
+            if ((int)token.pairIp - 1 < 0 || this->program[token.pairIp - 1].type != BIND) {
+                error(token, "Unexpected evaluated constant expression");
             }
         } break;
         case TRUE: {
@@ -531,25 +560,7 @@ void Parser::compileToNasmLinux86_64()
         output.append("    saved_rsp_end:\n");
 
         for (auto const& [name, info] : bindings) {
-            BindingSize size = info.size;
-            char mnemonic;
-
-            switch (size) {
-            case BindingSize::BYTE:
-                mnemonic = 'b';
-                break;
-            case BindingSize::WORD:
-                mnemonic = 'w';
-                break;
-            case BindingSize::DWORD:
-                mnemonic = 'd';
-                break;
-            case BindingSize::QWORD:
-                mnemonic = 'q';
-                break;
-            }
-
-            output.append(fmt::format("    binding_{}: res{} 1\n", info.addr, mnemonic));
+            output.append(fmt::format("    binding_{}: resb {}\n", info.addr, info.size));
         }
     }
 
@@ -708,8 +719,13 @@ void Parser::intrepret()
 
             ip++;
         } break;
-        case SIZE: {
-            error(token, "Bindings are not implemented yet");
+        case MAKECONSTEXPR: {
+            error(token, "Evaluated constant expressions are not implemented yet");
+
+            ip++;
+        } break;
+        case ENDCONSTEXPR: {
+            error(token, "Evaluated constant expressions are not implemented yet");
 
             ip++;
         } break;
@@ -719,20 +735,26 @@ void Parser::intrepret()
             ip++;
         } break;
         case MAKEPROC: {
-            if ((int)ip - 1 < 0)
+            if ((int)ip - 1 < 0) {
                 error(token, "Expected function name as IDENT but got nothing");
+                break;
+            }
 
             Token& name = this->program.at(ip - 1);
 
-            if (name.type != IDENT)
+            if (name.type != IDENT) {
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+                break;
+            }
 
             if (procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure with the name '{}' was alreay defined", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             } else if (bindings.contains(name.value.text)) {
                 error(token, fmt::format("Binding with the same name exist", name.value.text));
                 note(this->program[procs.at(name.value.text)], "Defined here");
+                break;
             }
 
             procs.insert({ name.value.text, ip });
@@ -744,16 +766,22 @@ void Parser::intrepret()
             returnAddrStack.pop_back();
         } break;
         case INVOKEPROC: {
-            if ((int)ip - 1 < 0)
+            if ((int)ip - 1 < 0) {
                 error(token, "Expected function name as IDENT but got nothing");
+                break;
+            }
 
             Token& name = this->program.at(ip - 1);
 
-            if (name.type != IDENT)
+            if (name.type != IDENT) {
                 error(token, fmt::format("Expected function name as IDENT but got {}", TokenTypeString[name.type]));
+                break;
+            }
 
-            if (!procs.contains(name.value.text))
+            if (!procs.contains(name.value.text)) {
                 error(token, fmt::format("Procedure '{}' is not defined", name.value.text));
+                break;
+            }
 
             returnAddrStack.push_back(ip);
             ip = procs.at(name.value.text) + 1;
@@ -916,6 +944,245 @@ void Parser::intrepret()
             std::exit(1);
         }
     } // while
+}
+
+Value Parser::evalConstExpr(InstructionAddr start, InstructionAddr end)
+{
+    std::vector<Token> exprProgram(this->program.begin() + start + 1, this->program.begin() + end);
+    std::vector<Value> stack;
+
+    if (exprProgram.size() < 1) {
+        error(this->program[start], "Empty evaluated constant expression");
+        return Value(ValueType::NONE, "");
+    }
+
+    for (Token& token : exprProgram) {
+        switch (token.type) {
+        case PUSH: {
+            stack.push_back(token.value);
+        } break;
+        case DUP: {
+            stack.push_back(stack.back());
+        } break;
+        case OVER: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(over);
+            stack.push_back(top);
+            stack.push_back(over);
+        } break;
+        case DROP: {
+            stack.pop_back();
+        } break;
+        case SWAP: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            stack.push_back(top);
+            stack.push_back(over);
+        } break;
+        case PLUS: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of PLUS operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of PLUS operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) + std::stol(top.text))));
+        } break;
+        case MINUS: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of MINUS operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of MINUS operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) - std::stol(top.text))));
+        } break;
+        case MULT: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of MULT operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of MULT operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) * std::stol(top.text))));
+        } break;
+        case DIV: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of DIV operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of DIV operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) / std::stol(top.text))));
+        } break;
+        case LOR: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of LOR operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of LOR operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) || std::stol(top.text))));
+        } break;
+        case LAND: {
+            Value top = stack.back();
+            stack.pop_back();
+            Value over = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of LAND operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+            if (over.type != ValueType::INT) {
+                error(token, "First argument of LAND operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(std::stol(over.text) && std::stol(top.text))));
+        } break;
+        case LNOT: {
+            Value top = stack.back();
+            stack.pop_back();
+
+            if (top.type != ValueType::INT) {
+                error(token, "Second argument of LAND operataion expected to be INT");
+                note(this->program[start], "In this evaluated constant expression");
+                return Value(ValueType::NONE, "");
+            }
+
+            stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(top.text))));
+        } break;
+        case TRUE: {
+            stack.push_back(Value(ValueType::INT, "1"));
+        } break;
+        case FALSE: {
+            stack.push_back(Value(ValueType::INT, "0"));
+        } break;
+        case STRING:
+        case STRING_DUMP:
+        case STRING_PLUS:
+        case DUMP:
+        case INPUT:
+        case BIND:
+        case SAVE:
+        case LOAD8:
+        case LOAD16:
+        case LOAD32:
+        case LOAD64:
+        case MAKECONSTEXPR:
+        case ENDCONSTEXPR:
+        case TERNARY:
+        case MAKEPROC:
+        case ENDPROC:
+        case INVOKEPROC:
+        case IF:
+        case ENDIF:
+        case WHILE:
+        case DOWHILE:
+        case ENDWHILE:
+        case EQUAL:
+        case NOTEQUAL:
+        case LESS:
+        case LESSEQUAL:
+        case GREATER:
+        case GREATEREQUAL:
+        case TORAX:
+        case TORBX:
+        case TORCX:
+        case TORDX:
+        case TORSI:
+        case TORDI:
+        case TORBP:
+        case TOR8:
+        case TOR9:
+        case TOR10:
+        case SYSTEM_SYSCALL:
+            error(token, fmt::format("{} operation is not supported in evaluated constant expression", TokenTypeString[token.type]));
+            note(this->program[start], "In this evaluated constant expression");
+            return Value(ValueType::NONE, "");
+        case IDENT:
+            error(token, "IDETs are not supported in evaluated constant expressions");
+            note(this->program[start], "In this evaluated constant expression");
+            return Value(ValueType::NONE, "");
+        case UNDEFINED:
+            std::cout << fmt::format("{} UwU ewwow: EndeyshentWabs made a fucky wucky!! A wittle fucko boingo!\n", token.pos.toString());
+            note(this->program[start], "In this evaluated constant expression");
+            std::exit(69);
+            break;
+        } // switfch
+    } // foreach (token : exprProgram)
+
+    if (stack.size() > 1) {
+        error(this->program[start], "Unhandled data on top of the stack in this evaluated constant expression. Expected only 1 INT");
+        return Value(ValueType::NONE, "");
+    }
+
+    if (stack.back().type != ValueType::INT) {
+        error(this->program[start], "Expected INT as a result of evaluated constant expression");
+        return Value(ValueType::NONE, "");
+    }
+
+    return Value(stack.back());
 }
 
 void Parser::error(Token token, std::string msg)

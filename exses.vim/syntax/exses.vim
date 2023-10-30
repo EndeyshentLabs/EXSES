@@ -52,10 +52,8 @@ syntax match xesSystem '>r9'
 syntax match xesSystem '>r10'
 syntax match xesSystem '\\syscall'
 
-syntax match xesBindingSize 'byte'
-syntax match xesBindingSize 'word'
-syntax match xesBindingSize 'dword'
-syntax match xesBindingSize 'qword'
+syntax match xesConstExpr '|\~'
+syntax match xesConstExpr '\~|'
 
 syntax match xesNumber "\v<\d+>"
 syntax match xesNumber "\v-<\d+>"
@@ -80,6 +78,6 @@ highlight default link xesLoop           Repeat
 highlight default link xesString         String
 highlight default link xesSpecial        Special
 highlight default link xesSystem         Special
-highlight default link xesBindingSize    Type
+highlight default link xesConstExpr      PreProc
 
 let b:current_syntax = 'exses'

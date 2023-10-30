@@ -40,6 +40,9 @@ private:
 
     void compileToNasmLinux86_64();
     void intrepret();
+
+    Value evalConstExpr(InstructionAddr start, InstructionAddr end);
+
     void error(Token token, std::string msg);
     void note(Token token, std::string msg);
 };

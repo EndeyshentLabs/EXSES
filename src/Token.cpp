@@ -39,11 +39,10 @@ TokenType tokenTypeFromString(std::string str)
         return LOAD32;
     } else if (str == "^64") {
         return LOAD64;
-    } else if (str == "byte"
-        || str == "word"
-        || str == "dword"
-        || str == "qword") {
-        return SIZE;
+    } else if (str == "|~") {
+        return MAKECONSTEXPR;
+    } else if (str == "~|") {
+        return ENDCONSTEXPR;
     } else if (str == ".?") {
         return TERNARY;
     } else if (str == "'") {

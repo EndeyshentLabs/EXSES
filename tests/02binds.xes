@@ -1,6 +1,6 @@
 # output: 420
-FiveOO qword <-
-EightO qword <-
+FiveOO <- |~ 1 8 * ~| # allocate 8 bytes
+EightO <- |~ 1 8 * ~|
 
 500 FiveOO <!
 80 EightO <!

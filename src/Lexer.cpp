@@ -193,6 +193,8 @@ enum class BlockType {
     WHILE,
     DOWHILE,
     ENDWHILE,
+    MAKECONSTEXPR,
+    ENDCONSTEXPR,
 };
 
 struct Block {
@@ -279,6 +281,18 @@ void Lexer::linkBlocks()
             token.pairIp = whil.ip;
             program[doWhile.ip].pairIp = ip;
             program[whil.ip].pairIp = ip;
+        } else if (token.type == MAKECONSTEXPR) {
+            blockStack.push_back(Block(BlockType::MAKECONSTEXPR, ip));
+        } else if (token.type == ENDCONSTEXPR) {
+            if (blockStack.size() < 1) {
+                fmt::print("{}: ERROR: `MAKECONSTEXPR` without `ENDCONSTEXPR`\n", token.pos.toString());
+            }
+
+            Block makeConstExpr = blockStack.back();
+            blockStack.pop_back();
+
+            token.pairIp = makeConstExpr.ip;
+            program[makeConstExpr.ip].pairIp = ip;
         }
     }
 
@@ -286,10 +300,10 @@ void Lexer::linkBlocks()
 
     for (Block& block : blockStack) {
         std::string msg;
-        if (block.type == BlockType::IF || block.type == BlockType::PROC || block.type == BlockType::WHILE || block.type == BlockType::DOWHILE) {
+        if (block.type == BlockType::IF || block.type == BlockType::PROC || block.type == BlockType::WHILE || block.type == BlockType::DOWHILE || block.type == BlockType::MAKECONSTEXPR) {
             msg = "Unclosed block";
         } else {
-            msg = "Unexpected block closing.";
+            msg = "Unexpected block closing";
         }
         fmt::print("{}: ERROR: {}.\n", this->program[block.ip].pos.toString(), msg);
         fail = true;

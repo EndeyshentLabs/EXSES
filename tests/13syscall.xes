@@ -1,10 +1,10 @@
 # output: Hello, World!
-msg qword <-
+msg <- |~ 8 ~| # allocate 8 bytes (64 bits)
 [Hello, World!\n] msg <!
 
 1         >rax
 1         >rdi
-msg ^64 >rsi
+msg ^64   >rsi
 14        >rdx
 \syscall _
 
