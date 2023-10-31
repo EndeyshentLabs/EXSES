@@ -1,11 +1,11 @@
 #ifndef EXSES_TOKEN_H
 #define EXSES_TOKEN_H
 
-#include <string>
-
 #include <Position.hpp>
 #include <Value.hpp>
+
 #include <vector>
+#include <string>
 
 enum TokenType {
     UNDEFINED = -1,

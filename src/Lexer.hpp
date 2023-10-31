@@ -1,7 +1,6 @@
 #ifndef EXSES_LEXER_H
 #define EXSES_LEXER_H
 
-#include <map>
 #include <string>
 #include <vector>
 

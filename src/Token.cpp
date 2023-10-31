@@ -1,5 +1,4 @@
 #include <Token.hpp>
-#include <vector>
 
 TokenType tokenTypeFromString(std::string str)
 {

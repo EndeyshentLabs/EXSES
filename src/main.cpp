@@ -1,6 +1,4 @@
 #include <Lexer.hpp>
-#include <cstring>
-#include <fstream>
 #include <iostream>
 #include <string>
 
