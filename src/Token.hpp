@@ -4,7 +4,7 @@
 #include <Position.hpp>
 #include <Value.hpp>
 
-#include <vector>
+#include <array>
 #include <string>
 
 enum TokenType {
@@ -126,7 +126,7 @@ static const std::string TokenTypeString[] = {
     "IDENT",
 };
 
-static const std::vector<std::string> Keywords = {
+static const std::array<std::string, 51> Keywords = {
     "s!",
     "s+",
     "&",
