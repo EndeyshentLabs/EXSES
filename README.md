@@ -78,5 +78,6 @@ $ cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build --config Release
 $ vim test.xes
 ... WRITING ...
-$ ./build/exsi nasm-linux-x86_64 test.xes # only for linux for now
+$ ./build/exsi test.xes # intrepreting mode
+$ ./build/exsi -t nasm-linux-x86_64 test.xes # compilation mode
 ```
