@@ -7,7 +7,7 @@ strlen '
     $ -
 "
 
-msg word <-
+msg <- |~ 8 ~| # Strings are basically pointers, so we'll alllocate 8 bytes
 [Hello] msg <!
 
 msg ^64 strlen : !
