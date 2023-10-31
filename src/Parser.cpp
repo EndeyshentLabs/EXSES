@@ -27,22 +27,6 @@ struct BindingInfo {
 std::map<std::string, InstructionAddr> procs;
 std::map<std::string, BindingInfo> bindings;
 
-#define LOAD_COMMON()                                                                                       \
-    if ((int)ip - 1 < 0) {                                                                                  \
-        error(token, "Expected binding name as IDENT but got nothing");                                     \
-        break;                                                                                              \
-    }                                                                                                       \
-    Token& name = this->program.at(ip - 1);                                                                 \
-    if (name.type != IDENT) {                                                                               \
-        error(token, fmt::format("Expected binding name as IDENT but got {}", TokenTypeString[name.type])); \
-        break;                                                                                              \
-    }                                                                                                       \
-    if (!bindings.contains(name.value.text)) {                                                              \
-        error(token, fmt::format("Binding '{}' is not defined", name.value.text));                          \
-        break;                                                                                              \
-    }                                                                                                       \
-    (void)NULL
-
 void Parser::parse()
 {
     switch (this->target) {
