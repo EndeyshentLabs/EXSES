@@ -48,9 +48,9 @@ EightO <- |~ 8 ~|
 80 EightO <!
 
 # load value of 'FiveOO' (e.g 500)
-FiveOO ^ ^64 # ^64 - dereferencing
+FiveOO ^64 # ^64 - dereferencing
 # load value of 'EightO' (e.g 80)
-1101 ^ ^64
+1101 ^64
 - # subtract
 ! # print (420)
 ```
