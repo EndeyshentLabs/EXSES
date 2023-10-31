@@ -1,0 +1,13 @@
+# output: Hello
+# output: World
+# output: 1337
+
+arr <- |~ 8 3 * ~|
+
+[Hello\n] arr 8 0 * + <!
+[World\n] arr 8 1 * + <!
+1337    arr 8 2 * + <!
+
+arr 8 0 * + ^64 s!
+arr 8 1 * + ^64 s!
+arr 8 2 * + ^64  !
