@@ -488,11 +488,15 @@ void Parser::compileToNasmLinux86_64()
             }
         } break;
         case MAKECONSTEXPR: {
+            output.append(fmt::format("addr_{}: ;; {}: MAKECONSTEXPR\n", ip, token.pos.toString()));
             if ((int)ip - 1 < 0 || this->program[ip - 1].type != BIND) {
                 error(token, "Unexpected evaluated constant expression");
             }
+
+            ip = token.pairIp;
         } break;
         case ENDCONSTEXPR: {
+            output.append(fmt::format("addr_{}: ;; {}: ENDCONSTEXPR\n", ip, token.pos.toString()));
             if ((int)token.pairIp - 1 < 0 || this->program[token.pairIp - 1].type != BIND) {
                 error(token, "Unexpected evaluated constant expression");
             }
