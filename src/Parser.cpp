@@ -143,7 +143,7 @@ void Parser::compileToNasmLinux86_64()
             output.append("    push rbx\n");
         } break;
         case MULT: {
-            output.append(fmt::format("addr_{}: ;; {}: MINUS\n", ip, token.pos.toString()));
+            output.append(fmt::format("addr_{}: ;; {}: MULT\n", ip, token.pos.toString()));
             output.append("    pop rax\n");
             output.append("    pop rbx\n");
             output.append("    mul rbx\n");
