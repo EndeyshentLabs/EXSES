@@ -1,0 +1,13 @@
+# output: 5
+strlen '
+    &
+    { & ^8 0 <> =>
+        1 +
+    }
+    $ -
+"
+
+msg <- |~ 8 ~| # Strings are basically pointers, so we'll alllocate 8 bytes
+[Hello] msg <!
+
+msg ^64 strlen : !

@@ -1,24 +1,27 @@
 #ifndef EXSES_LEXER_H
 #define EXSES_LEXER_H
 
-#include <map>
 #include <string>
 #include <vector>
 
-#include <Procedure.hpp>
+#include <Position.hpp>
 #include <Token.hpp>
 
 enum Target {
-    EXSI
+    EXSI,
+    NASM_LINUX_X86_64,
+    NASM_WIN32, // NOTE: Not supported
+#ifdef SUPPORT_LLVM
+    LLVM, // NOTE: Not supported
+#endif
 };
 
 class Lexer {
 public:
     Lexer(std::string fileName, Target target);
     Target target;
-    void tokenize();
-    void intrepret(bool insideOfProc = false, std::vector<Token> procBody = {});
-    void compileToPython3();
+    void lexSource();
+    void intrepret();
     void run();
 
 private:
@@ -26,19 +29,17 @@ private:
     std::string fileName;
     std::vector<Token> program;
     std::vector<Value> stack;
-    std::map<std::string, Value> storage;
-    std::vector<Procedure> procedureStorage;
-    TokenType makeType(std::string text);
-    void makeError(Token token, std::string text);
-    std::string tokenLocation(Token token);
-    void processStringLiteral(Token& token);
-    void processToken(Token& token, bool inside);
-    bool processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body);
-    void lexLine(std::string line);
-    void createToken(std::string text, unsigned int col);
-};
+    char curChar;
+    Position pos;
+    unsigned int cursor;
 
-template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
-void printTokenLineInfo(T token);
+    void advance();
+
+    Token makeNumber();
+    Token makeString();
+    Token makeIdentifier();
+
+    void linkBlocks();
+};
 
 #endif /* EXSES_LEXER_H */

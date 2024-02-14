@@ -1,0 +1,16 @@
+# output: 56
+# output: 88
+# output: Hello, EndeyshentLabs
+Do56 ' 56 ! "
+
+Do56 :
+
+Print ' ! "
+
+88 Print :
+
+Greet '
+    [Hello, ] s! s! [\n] s!
+"
+
+[EndeyshentLabs] Greet :

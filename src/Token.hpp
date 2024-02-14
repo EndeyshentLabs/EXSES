@@ -1,14 +1,17 @@
 #ifndef EXSES_TOKEN_H
 #define EXSES_TOKEN_H
 
-#include <string>
-
+#include <Position.hpp>
 #include <Value.hpp>
+
+#include <array>
+#include <string>
 
 enum TokenType {
     UNDEFINED = -1,
     PUSH = 0,
     STRING,
+    STRING_DUMP,
     STRING_PLUS,
     DUP,
     OVER,
@@ -22,13 +25,21 @@ enum TokenType {
     INPUT,
     BIND,
     SAVE,
-    LOAD,
+    LOAD8,
+    LOAD16,
+    LOAD32,
+    LOAD64,
+    MAKECONSTEXPR,
+    ENDCONSTEXPR,
     TERNARY,
     MAKEPROC,
     ENDPROC,
     INVOKEPROC,
     IF,
     ENDIF,
+    WHILE,
+    DOWHILE,
+    ENDWHILE,
     EQUAL,
     NOTEQUAL,
     LESS,
@@ -40,29 +51,155 @@ enum TokenType {
     LNOT, // Logical NOT (aka !)
     TRUE,
     FALSE,
+    // Register manipulation
+    TORAX,
+    TORBX,
+    TORCX,
+    TORDX,
+    TORSI,
+    TORDI,
+    TORBP,
+    TOR8,
+    TOR9,
+    TOR10,
+    SYSTEM_SYSCALL,
+
+    // Identifier
+    IDENT,
 };
 
-extern std::string TokenTypeString[];
+static const std::string TokenTypeString[] = {
+    "PUSH",
+    "STRING",
+    "STRING_DUMP",
+    "STRING_PLUS",
+    "DUP",
+    "OVER",
+    "DROP",
+    "SWAP",
+    "PLUS",
+    "MINUS",
+    "MULT",
+    "DIV",
+    "DUMP",
+    "INPUT",
+    "BIND",
+    "SAVE",
+    "LOAD8",
+    "LOAD16",
+    "LOAD32",
+    "LOAD64",
+    "MAKECONTEXPR",
+    "ENDCONTEXPR",
+    "TERNARY",
+    "MAKEPROC",
+    "ENDPROC",
+    "INVOKEPROC",
+    "IF",
+    "ENDIF",
+    "WHILE",
+    "DOWHILE",
+    "ENDWHILE",
+    "EQUAL",
+    "NOTEQUAL",
+    "LESS",
+    "LESSEQUAL",
+    "GREATER",
+    "GREATEREQUAL",
+    "LOR",
+    "LAND",
+    "LNOT",
+    "TRUE",
+    "FALSE",
+    "TORAX",
+    "TORBX",
+    "TORCX",
+    "TORDX",
+    "TORSI",
+    "TORDI",
+    "TORBP",
+    "TOR8",
+    "TOR9",
+    "TOR10",
+    "SYSTEM_SYSCALL",
+
+    "IDENT",
+};
+
+static const std::array<std::string, 51> Keywords = {
+    "s!",
+    "s+",
+    "&",
+    "$&",
+    "_",
+    "$",
+    "+",
+    "-",
+    "*",
+    "/",
+    "!",
+    "@",
+    "<-",
+    "<!",
+    "^8",
+    "^16",
+    "^32",
+    "^64",
+    "|~",
+    "~|",
+    ".?",
+    "'",
+    "\"",
+    ":",
+    "(",
+    ")",
+    "{",
+    "=>",
+    "}",
+    "=",
+    "<>",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "||",
+    "&&",
+    "!!",
+    "true",
+    "false",
+    ">rax",
+    ">rbx",
+    ">rcx",
+    ">rdx",
+    ">rsi",
+    ">rdi",
+    ">rbp",
+    ">r8",
+    ">r9",
+    ">r10",
+    "\\syscall",
+};
+
+TokenType tokenTypeFromString(std::string str);
 
 struct Token {
+    Token(Position pos, TokenType type, std::string text, Value value)
+        : pos(pos)
+        , type(type)
+        , text(std::move(text))
+        , value(value)
+    {
+    }
     Token(const Token&) = default;
     Token(Token&&) = default;
     Token& operator=(const Token&) = delete;
     Token& operator=(Token&&) = delete;
-    Token(unsigned int line, unsigned int col, TokenType type, std::string text, Value value)
-        : line(line)
-        , col(col)
-        , type(type)
-        , text(std::move(text))
-        , value(std::move(value))
-    {
-    }
-    unsigned int line;
-    unsigned int col;
+    Position pos;
     TokenType type;
     const std::string text;
     Value value;
-    bool enabled = true;
+    // Only for blocks
+    unsigned int pairIp = 0;
 };
 
 #endif /* EXSES_TOKEN_H */

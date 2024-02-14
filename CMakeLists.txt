@@ -15,9 +15,10 @@ add_executable(
     src/main.cpp
     src/Lexer.cpp
     src/utils.cpp
-    src/Procedure.cpp
     src/Token.cpp
     src/Value.cpp
+    src/Position.cpp
+    src/Parser.cpp
 )
 
 target_include_directories(exsi PUBLIC src)
@@ -37,6 +38,9 @@ target_compile_options(exsi PRIVATE
     -fcolor-diagnostics
 )
 endif()
+
+find_package(fmt)
+target_link_libraries(exsi fmt::fmt)
 
 target_link_options(exsi PRIVATE
     $<$<CONFIG:DEBUG>:-O0 -g3 -ggdb3>

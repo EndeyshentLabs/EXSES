@@ -2,6 +2,12 @@
 
 set -eo pipefail
 
+if [[ ! "`uname -s`" == "Linux" && ! "`uname -m`" == "x86_64" ]]
+then
+    echo Testing is only supported for Linux x86_64
+    exit 1
+fi
+
 if [[ ! -d release ]]
 then
     echo Initializing CMake Build Tree...
@@ -13,7 +19,7 @@ cmake --build release -j --config Release
 
 has_failed=0
 
-function test_folder () {
+function test_folder {
     local folder=$1
     echo -e "\nTesting $folder @ `date`"
     local failed=0
@@ -31,13 +37,14 @@ function test_folder () {
             continue
         fi
         local output=`cat $f | grep '^# output: ' | sed 's/^# output: //g'`
-        if [ ! "$(./release/exsi $f)" = "$output" ]
+        local real="`./release/exsi exsi "$f"`"
+        if [ ! "$real" = "$output" ]
         then
             printf "\e[31mFAILED!\e[0m\n"
             printf "Expected:\n"
             printf "$output\n"
             printf "Got:\n"
-            printf "$(./release/exsi $f)\n"
+            printf "$real\n"
             failed=$((failed+1))
             has_failed=1
         else

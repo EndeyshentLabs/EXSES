@@ -1,0 +1,13 @@
+# output: Hello, World!
+msg <- |~ 8 ~| # allocate 8 bytes (64 bits)
+[Hello, World!\n] msg <!
+
+1         >rax
+1         >rdi
+msg ^64   >rsi
+14        >rdx
+\syscall _
+
+60 >rax
+69 >rdi
+\syscall

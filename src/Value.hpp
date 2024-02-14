@@ -4,20 +4,21 @@
 #include <string>
 
 enum class ValueType {
+    NONE = 0,
     INT,
     STRING
 };
 
 struct Value {
-    Value(const Value&) = default;
-    Value(Value&&) = default;
-    Value& operator=(const Value&) = default;
-    Value& operator=(Value&&) = default;
     Value(ValueType type, std::string text)
         : type(type)
         , text(std::move(text))
     {
     }
+    Value(const Value&) = default;
+    Value(Value&&) = default;
+    Value& operator=(const Value&) = default;
+    Value& operator=(Value&&) = default;
     ValueType type;
     std::string text;
     bool operator==(Value& other);

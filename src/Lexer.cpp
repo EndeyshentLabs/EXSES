@@ -1,17 +1,16 @@
 #include <Lexer.hpp>
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <Procedure.hpp>
+#include <Parser.hpp>
 #include <Token.hpp>
 #include <Value.hpp>
 #include <utils.hpp>
+
+#include <fmt/format.h>
 
 #define makeNote(tokenLike, text)                                                                                                                                    \
     do {                                                                                                                                                             \
@@ -34,749 +33,277 @@ Lexer::Lexer(std::string fileName, Target target)
         }
         sourceFile.close();
     } else {
-        std::cerr << "ERROR: Couldn't open a file '" << this->fileName << "'!\n";
-    }
-
-    this->run();
-}
-
-int stripByCol(std::string line, unsigned int col)
-{
-    while (col < line.length() && !std::isspace(line[col])) {
-        col++;
-    }
-    return col;
-}
-
-int chopWord(std::string line, unsigned int col)
-{
-    while (col < line.length() && std::isspace(line[col])) {
-        col++;
-    }
-    return col;
-}
-
-unsigned int lineCount = 0;
-
-void Lexer::tokenize()
-{
-    lines = split(source, "\\n");
-
-    for (std::string line : lines) {
-        lexLine(line);
-    }
-}
-
-void Lexer::intrepret(bool inside, std::vector<Token> procBody)
-{
-    if (!inside && procBody.size() != 0) {
-        std::cerr << "ERROR: EndeyshentLabs did something wrong! OMEGALUL\n";
+        std::cerr << "ERROR: Couldn't open file '" << this->fileName << "'!\n";
         std::exit(1);
     }
 
-    for (Token token : (inside ? procBody : this->program)) {
-        if (!token.enabled && !inside) {
-            continue;
-        }
-        processToken(token, inside);
+    this->cursor = 0;
+    this->curChar = this->source[0];
+
+    this->pos = Position(fileName, 0, 0);
+    this->run();
+}
+
+void Lexer::advance()
+{
+    this->cursor++;
+
+    if (this->cursor > this->source.size() - 1) {
+        this->curChar = '\0';
+        return;
     }
+
+    this->pos.col++;
+    this->curChar = this->source.at(this->cursor);
+}
+
+void Lexer::lexSource()
+{
+    while (this->curChar != '\0') {
+        if (this->curChar == ' ') {
+            this->advance();
+        } else if (this->curChar == '#') {
+            while (this->curChar != '\0' && this->curChar != '\n') {
+                this->advance();
+            }
+            this->pos.line++;
+            this->pos.col = 0;
+            this->advance();
+        } else if (this->curChar == '\n') {
+            this->pos.line++;
+            this->pos.col = 0;
+            this->advance();
+        } else if (std::isdigit(this->curChar)) {
+            this->program.push_back(this->makeNumber());
+        } else if (this->curChar == '[') {
+            this->program.push_back(this->makeString());
+            this->advance();
+        } else {
+            this->program.push_back(this->makeIdentifier());
+        }
+    }
+}
+
+Token Lexer::makeNumber()
+{
+    std::string buf;
+
+    Position startPos(this->pos);
+
+    while (this->curChar != 0 && std::isdigit(this->curChar)) {
+        buf.push_back(this->curChar);
+        this->advance();
+    }
+
+    return Token(startPos, PUSH, buf, Value(ValueType::INT, buf));
+}
+
+Token Lexer::makeString()
+{
+    std::string buf;
+    Position startPos(this->pos);
+    unsigned int savedCursor = this->cursor;
+
+    this->advance();
+
+    while (this->curChar != ']' && this->curChar != 0) {
+        if (this->curChar == '\\') {
+            this->advance();
+            switch (this->curChar) {
+            case ']':
+                buf.push_back(']');
+                break;
+            case 'n':
+                buf.push_back('\n');
+                break;
+            case 'r':
+                buf.push_back('\r');
+                break;
+            case 't':
+                buf.push_back('\t');
+                break;
+            case 'v':
+                buf.push_back('\v');
+                break;
+            default:
+                fmt::print("{}: ERROR: Unknown escaping {}.\n", startPos.toString(), this->curChar);
+                break;
+            }
+            this->advance();
+            if (this->curChar == ']' || this->curChar == 0)
+                break;
+        } else {
+            buf.push_back(this->curChar);
+            this->advance();
+        }
+    }
+
+    return Token(startPos, STRING, this->source.substr(savedCursor, this->cursor - savedCursor + 1), Value(ValueType::STRING, buf));
+}
+
+Token Lexer::makeIdentifier()
+{
+    std::string buf;
+    Position startPos(this->pos);
+
+    while (this->curChar != '\0' && !std::isspace(this->curChar)) {
+        buf.push_back(this->curChar);
+        this->advance();
+    }
+
+    if (std::find(Keywords.begin(), Keywords.end(), buf) != Keywords.end()) {
+        return Token(startPos, tokenTypeFromString(buf), buf, Value(ValueType::NONE, ""));
+    }
+
+    return Token(startPos, IDENT, buf, Value(ValueType::NONE, buf));
 }
 
 void Lexer::run()
 {
-    this->tokenize();
+    this->lexSource();
+    this->linkBlocks();
+
 #if defined(DEBUG)
     std::cout << "Program:\n";
     for (Token token : program) {
-        std::printf("%s: type: %s, text: `%s`\n", tokenLocation(token).c_str(), TokenTypeString[token.type].c_str(), token.text.c_str());
+        fmt::print("{}: type: {}, text: `{}`, pairIp: {}\n", token.pos.toString(), TokenTypeString[token.type], token.text, token.pairIp);
     }
 #endif
-    if (this->target == EXSI) {
-        this->intrepret();
-    } else {
-        std::cerr << "Only EXSI target is supported right now!\n";
-        std::exit(1);
+
+    Parser parser(this->target, this->fileName, this->program);
+
+    // if (this->target == EXSI) {
+    //     this->intrepret();
+    // } else {
+    //     std::cerr << "Only EXSI target is supported right now!\n";
+    //     std::exit(1);
+    // }
+}
+
+enum class BlockType {
+    IF,
+    ENDIF,
+    PROC,
+    ENDPROC,
+    WHILE,
+    DOWHILE,
+    ENDWHILE,
+    MAKECONSTEXPR,
+    ENDCONSTEXPR,
+};
+
+struct Block {
+    Block(BlockType type, unsigned int ip)
+        : type(type)
+        , ip(ip)
+    {
     }
-}
+    BlockType type;
+    unsigned int ip;
+};
 
-TokenType Lexer::makeType(std::string text)
+std::vector<Block> blockStack;
+
+void Lexer::linkBlocks()
 {
-    if (isInteger(text)) {
-        return PUSH;
-    } else if (text == "[+]") {
-        return STRING_PLUS;
-    } else if (std::regex_match(text, std::regex("\\[.*\\]"))) {
-        return STRING;
-    } else if (text == "+") {
-        return PLUS;
-    } else if (text == "-") {
-        return MINUS;
-    } else if (text == "*") {
-        return MULT;
-    } else if (text == "/") {
-        return DIV;
-    } else if (text == "&") {
-        return DUP;
-    } else if (text == "$&") {
-        return OVER;
-    } else if (text == "_") {
-        return DROP;
-    } else if (text == "$") {
-        return SWAP;
-    } else if (text == "!") {
-        return DUMP;
-    } else if (text == "@") {
-        return INPUT;
-    } else if (text == "<-") {
-        return BIND;
-    } else if (text == "<!") {
-        return SAVE;
-    } else if (text == "^") {
-        return LOAD;
-    } else if (text == ".?") {
-        return TERNARY;
-    } else if (text == "'") {
-        return MAKEPROC;
-    } else if (text == "\"") {
-        return ENDPROC;
-    } else if (text == ":") {
-        return INVOKEPROC;
-    } else if (text == "(") {
-        return IF;
-    } else if (text == ")") {
-        return ENDIF;
-    } else if (text == "=") {
-        return EQUAL;
-    } else if (text == "<>") {
-        return NOTEQUAL;
-    } else if (text == "<") {
-        return LESS;
-    } else if (text == "<=") {
-        return LESSEQUAL;
-    } else if (text == ">") {
-        return GREATER;
-    } else if (text == ">=") {
-        return GREATEREQUAL;
-    } else if (text == "||") {
-        return LOR;
-    } else if (text == "&&") {
-        return LAND;
-    } else if (text == "!!") {
-        return LNOT;
-    } else if (text == "true") {
-        return TRUE;
-    } else if (text == "false") {
-        return FALSE;
-    }
+    for (unsigned int ip = 0; ip < program.size(); ip++) {
+        Token& token = program[ip];
 
-    return UNDEFINED;
-}
-
-void Lexer::makeError(Token token, std::string text)
-{
-    std::cerr << tokenLocation(token) << ": \033[31mERROR\033[0m: " << text << '\n';
-    printTokenLineInfo(token);
-}
-
-std::string Lexer::tokenLocation(Token token)
-{
-    return fileName + ":" + std::to_string(token.line + 1) + ":" + std::to_string(token.col + 1);
-}
-
-template <typename T> // This trick is needed for compatibility with both Token and Procedure classes
-void printTokenLineInfo(T token)
-{
-    std::printf("%d | %s\n", token.line + 1, lines[token.line].c_str());
-    for (unsigned int i = 0; i < std::to_string(token.line).length() + 1; i++) {
-        std::cout << " ";
-    }
-    std::cout << " | \033[31m";
-    for (unsigned int i = 0; i < token.col; i++) {
-        std::cout << " ";
-    }
-    std::cout << "^\033[0m\n";
-}
-
-void Lexer::processStringLiteral(Token& token)
-{
-    token.value.text = token.text.substr(1, token.text.length() - 2);
-    if (token.value.text.find('\\') != std::string::npos) {
-        unsigned int pos = 0;
-        for (auto c : token.value.text) {
-            if (c == '\\') {
-                Token escapePosTok(token.line, token.col + pos + 1, token.type, token.value.text, Value(ValueType::STRING, token.value.text));
-                switch (token.value.text[pos + 1]) {
-                case 'n': {
-                    token.value.text.replace(pos, 2, "\n");
-                } break;
-                case 'r': {
-                    token.value.text.replace(pos, 2, "\r");
-                } break;
-                case 's': {
-                    token.value.text.replace(pos, 2, " ");
-                } break;
-                case '+': {
-                    token.value.text.replace(pos, 2, "+");
-                } break;
-                default: {
-                    makeError(escapePosTok, "Incomplete escape sequence");
-                    std::exit(1);
-                }
-                }
-            }
-            pos++;
-        }
-    }
-}
-
-void Lexer::processToken(Token& token, bool inside)
-{
-    switch (token.type) {
-    case PUSH: {
-        stack.push_back(Value(ValueType::INT, token.value.text));
-    } break;
-    case STRING: {
-        stack.push_back(Value(ValueType::STRING, token.value.text));
-    } break;
-    case DUP: {
-        stack.push_back(stack.back());
-    } break;
-    case OVER: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        stack.push_back(b);
-        stack.push_back(a);
-        stack.push_back(b);
-    } break;
-    case DROP: {
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        stack.pop_back();
-    } break;
-    case SWAP: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        stack.push_back(a);
-        stack.push_back(b);
-    } break;
-    case PLUS: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `+` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) + std::stol(b.text))));
-    } break;
-    case STRING_PLUS: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        stack.push_back(Value(ValueType::STRING, a.text + b.text));
-    } break;
-    case MINUS: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `-` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) - std::stol(a.text))));
-    } break;
-    case MULT: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `*` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(a.text) * std::stol(b.text))));
-    } break;
-    case DIV: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `/` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) / std::stol(a.text))));
-    } break;
-    case DUMP: {
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack! Expected 1, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        std::string a = stack.back().text;
-        stack.pop_back();
-
-        std::cout << a << '\n';
-    } break;
-    case INPUT: {
-        std::string input;
-        std::cin >> input;
-        stack.push_back(Value(ValueType::STRING, input));
-    } break;
-    case BIND: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value value = stack.back();
-        stack.pop_back();
-        std::string name = stack.back().text;
-        stack.pop_back();
-
-        if (storage.contains(name)) {
-            makeError(token, "There is a bind with the name `" + name + "`!");
-            std::exit(1);
-        }
-
-#if 0
-        storage[name] = value;
-#else
-        storage.insert_or_assign(name, value);
-#endif
-    } break;
-    case SAVE: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack! Expected 2, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        Value value = stack.back();
-        stack.pop_back();
-        std::string name = stack.back().text;
-        stack.pop_back();
-
-        if (!storage.contains(name)) {
-            makeError(token, "There is no bind with the name `" + name + "`!");
-            std::exit(1);
-        }
-
-#if 0
-        storage[name] = value;
-#else
-        storage.insert_or_assign(name, value);
-#endif
-    } break;
-    case LOAD: {
-        std::string name = stack.back().text;
-        stack.pop_back();
-
-        if (!storage.contains(name)) {
-            makeError(token, "There is no bind with that name!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(storage.at(name).type, storage.at(name).text));
-    } break;
-    case TERNARY: {
-        if (stack.size() < 3) {
-            makeError(token, "Not enough elements on the stack! Expected 3, got " + std::to_string(stack.size()) + ".");
-            std::exit(1);
-        }
-
-        long cond = std::stol(stack.back().text);
-        stack.pop_back();
-        Value alt = stack.back();
-        stack.pop_back();
-        Value main = stack.back();
-        stack.pop_back();
-
-        if (cond) {
-            stack.push_back(main);
-        } else {
-            stack.push_back(alt);
-        }
-    } break;
-    case MAKEPROC: {
-        if (inside) {
-            makeError(token, "Possible procedure inside of another procedure");
-            std::exit(1);
-        }
-
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack! Expected name of the procedure.");
-            std::exit(1);
-        }
-
-        std::string name = stack.back().text;
-
-        for (Procedure proc : procedureStorage) {
-            if (proc.name == name) {
-                makeError(token, "There is the procedure with the name `" + proc.name + "`!");
-
-                makeNote(proc, "Defined here.");
+        if (token.type == IF) {
+            blockStack.push_back(Block(BlockType::IF, ip));
+        } else if (token.type == ENDIF) {
+            if (blockStack.size() < 1) {
+                fmt::print("{}: ERROR: `ENDIF` without `IF`\n", token.pos.toString());
                 std::exit(1);
             }
-        }
 
-        stack.pop_back();
+            Block block = blockStack.back();
+            blockStack.pop_back();
 
-        std::vector<Token> body;
-        bool hasEnd = false;
-
-        hasEnd = processFolded(token, MAKEPROC, ENDPROC, body);
-
-        if (!hasEnd) {
-            makeError(token, "Unclosed procedure '" + name + "'");
-            std::exit(1);
-        }
-
-        Procedure proc(token.line, token.col, name, body);
-        procedureStorage.push_back(proc);
-    } break;
-    case ENDPROC: {
-        if (token.enabled) {
-            makeError(token, "Closing the procedure outside of any procedure!");
-            std::exit(1);
-        }
-    } break;
-    case INVOKEPROC: {
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack! Expected name of the procedure to invoke.");
-            std::exit(1);
-        }
-
-        std::string name = stack.back().text;
-        stack.pop_back();
-
-        bool found = false;
-
-        for (Procedure proc : procedureStorage) {
-            if (proc.name == name) {
-                intrepret(true, proc.getBody());
-                found = true;
-                break;
+            if (block.type != BlockType::IF) {
+                fmt::print("{}: ERROR: `ENDIF` can only close `IF` blocks!\n", token.pos.toString());
+                std::exit(1);
             }
+
+            token.pairIp = block.ip;
+
+            program[block.ip].pairIp = ip;
+        } else if (token.type == MAKEPROC) {
+            blockStack.push_back(Block(BlockType::PROC, ip));
+        } else if (token.type == ENDPROC) {
+            if (blockStack.size() < 1) {
+                fmt::print("{}: ERROR: `ENDPROC` without `MAKEPROC`\n", token.pos.toString());
+                std::exit(1);
+            }
+
+            Block block = blockStack.back();
+            blockStack.pop_back();
+
+            if (block.type != BlockType::PROC) {
+                fmt::print("{}: ERROR: `ENDPROC` can only close procedure body!\n", token.pos.toString());
+                std::exit(1);
+            }
+
+            token.pairIp = block.ip;
+
+            program[block.ip].pairIp = ip;
+        } else if (token.type == WHILE) {
+            blockStack.push_back(Block(BlockType::WHILE, ip));
+        } else if (token.type == DOWHILE) {
+            blockStack.push_back(Block(BlockType::DOWHILE, ip));
+        } else if (token.type == ENDWHILE) {
+            if (blockStack.size() < 2) {
+                fmt::print("{}: ERROR: `ENDWHILE` without `WHILE` + `DOWHILE`\n", token.pos.toString());
+                std::exit(1);
+            }
+
+            Block doWhile = blockStack.back();
+            blockStack.pop_back();
+
+            if (doWhile.type != BlockType::DOWHILE) {
+                fmt::print("{}: ERROR: `ENDWHILE` can only close `DOWHILE` blocks!\n", token.pos.toString());
+                std::exit(1);
+            }
+
+            Block whil = blockStack.back();
+            blockStack.pop_back();
+
+            if (whil.type != BlockType::WHILE) {
+                fmt::print("{}: ERROR: `DOWHILE` can only close `WHILE` blocks!\n", token.pos.toString());
+                std::exit(1);
+            }
+
+            token.pairIp = whil.ip;
+            program[doWhile.ip].pairIp = ip;
+            program[whil.ip].pairIp = ip;
+        } else if (token.type == MAKECONSTEXPR) {
+            blockStack.push_back(Block(BlockType::MAKECONSTEXPR, ip));
+        } else if (token.type == ENDCONSTEXPR) {
+            if (blockStack.size() < 1) {
+                fmt::print("{}: ERROR: `MAKECONSTEXPR` without `ENDCONSTEXPR`\n", token.pos.toString());
+            }
+
+            Block makeConstExpr = blockStack.back();
+            blockStack.pop_back();
+
+            token.pairIp = makeConstExpr.ip;
+            program[makeConstExpr.ip].pairIp = ip;
         }
+    }
 
-        if (!found) {
-            makeError(token, "No such procedure '" + name + "'");
-            std::exit(1);
-        }
-    } break;
-    case IF: {
-        if (inside)
-            break;
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack! Expected condition.");
-            std::exit(1);
-        }
+    bool fail = false;
 
-        long cond = std::stol(stack.back().text);
-        stack.pop_back();
-
-        std::vector<Token> body;
-        bool hasEnd = false;
-
-        hasEnd = processFolded(token, IF, ENDIF, body);
-
-        if (!hasEnd) {
-            makeError(token, "Unclosed IF");
-            std::exit(1);
-        }
-
-        if (cond) {
-            intrepret(true, body);
-        }
-    } break;
-    case ENDIF: {
-        if (token.enabled) {
-            makeError(token, "Closing IF statement outside of IF statement");
-            std::exit(1);
-        }
-    } break;
-    case EQUAL: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type == b.type) {
-            stack.push_back(Value(ValueType::INT, std::to_string(b == a)));
+    for (Block& block : blockStack) {
+        std::string msg;
+        if (block.type == BlockType::IF || block.type == BlockType::PROC || block.type == BlockType::WHILE || block.type == BlockType::DOWHILE || block.type == BlockType::MAKECONSTEXPR) {
+            msg = "Unclosed block";
         } else {
-            stack.push_back(Value(ValueType::INT, "0"));
+            msg = "Unexpected block closing";
         }
-    } break;
-    case NOTEQUAL: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
+        fmt::print("{}: ERROR: {}.\n", this->program[block.ip].pos.toString(), msg);
+        fail = true;
+    }
 
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type == b.type) {
-            stack.push_back(Value(ValueType::INT, std::to_string(b.text != a.text)));
-        } else {
-            stack.push_back(Value(ValueType::INT, "1"));
-        }
-    } break;
-    case LESS: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `<` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) < std::stol(a.text))));
-    } break;
-    case LESSEQUAL: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `<=` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) <= std::stol(a.text))));
-    } break;
-    case GREATER: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `>` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) > std::stol(a.text))));
-    } break;
-    case GREATEREQUAL: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `>=` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) >= std::stol(a.text))));
-    } break;
-    case LOR: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `||` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) || std::stol(a.text))));
-    } break;
-    case LAND: {
-        if (stack.size() < 2) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-        Value b = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT || b.type != ValueType::INT) {
-            makeError(token, "Both arguments of `&&` operation must be an INTs!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(std::stol(b.text) && std::stol(a.text))));
-    } break;
-    case LNOT: {
-        if (stack.size() < 1) {
-            makeError(token, "Not enough elements on the stack!");
-            std::exit(1);
-        }
-
-        Value a = stack.back();
-        stack.pop_back();
-
-        if (a.type != ValueType::INT) {
-            makeError(token, "Arguments of `!!` operation must be an INT!");
-            std::exit(1);
-        }
-
-        stack.push_back(Value(ValueType::INT, std::to_string(!std::stol(a.text))));
-    } break;
-    case TRUE: {
-        stack.push_back(Value(ValueType::INT, std::to_string(1)));
-    } break;
-    case FALSE: {
-        stack.push_back(Value(ValueType::INT, std::to_string(0)));
-    } break;
-    case UNDEFINED: {
-        std::cerr << "ERROR: UNREACHABLE\n";
+    if (fail)
         std::exit(1);
-    } break;
-    }
-}
-
-bool Lexer::processFolded(Token& token, TokenType startType, TokenType endType, std::vector<Token>& body)
-{
-    for (Token& op : program) {
-        if (op.line < token.line || (op.line == token.line && op.col < token.col) || op.type == startType)
-            continue;
-        if (op.type == endType && op.enabled) {
-            op.enabled = false;
-            return true;
-            break;
-        }
-        op.enabled = false;
-        body.push_back(op);
-    }
-    return false;
-}
-
-void Lexer::lexLine(std::string line)
-{
-    unsigned int col = chopWord(line, 0);
-    unsigned int colEnd = 0;
-
-    if (line.find("#") != std::string::npos) {
-        line = line.substr(0, line.find("#"));
-    }
-
-    while (col < line.length()) {
-        colEnd = stripByCol(line, col);
-        if (line.substr(col, colEnd).find(" ") != std::string::npos) { // TODO: make it better
-            auto list = split(line.substr(col, colEnd), "\\s");
-            std::string text = list.front();
-
-            createToken(text, col);
-        } else {
-            std::string text = line.substr(col, colEnd);
-
-            createToken(text, col);
-        }
-        col = chopWord(line, colEnd);
-    }
-
-    lineCount++;
-}
-
-void Lexer::createToken(std::string text, unsigned int col)
-{
-    Token token(lineCount, col, makeType(text), text, Value(isInteger(text) ? ValueType::INT : ValueType::STRING, text));
-
-    if (token.type == UNDEFINED) {
-        makeError(token, "Unexpected token `" + token.text + "`");
-        std::exit(1);
-    }
-
-    if (token.type == STRING) {
-        processStringLiteral(token);
-    }
-
-    this->program.push_back(token);
 }
