@@ -20,6 +20,11 @@
     } while (0)
 
 struct BindingInfo {
+    BindingInfo(unsigned long size, InstructionAddr addr)
+        : size(size)
+        , addr(addr)
+    {
+    }
     unsigned long size;
     InstructionAddr addr;
 };
